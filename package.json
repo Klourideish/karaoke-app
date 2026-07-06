@@ -1,0 +1,25 @@
+{
+  "name": "karaoke-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Modern browser-based karaoke application",
+  "author": "Kyle",
+  "license": "MIT",
+
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+
+  "scripts": {
+  "dev:frontend": "npm run dev --workspace=frontend",
+  "dev:backend": "npm run dev --workspace=backend",
+  "build:frontend": "npm run build --workspace=frontend",
+  "build:backend": "npm run build --workspace=backend"
+},
+
+"engines": {
+    "node": ">=24"
+  }
+}
