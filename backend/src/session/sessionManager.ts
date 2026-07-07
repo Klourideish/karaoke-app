@@ -107,6 +107,39 @@ export function voteForSong(
   return true;
 }
 
+export function advancePosition(seconds: number): void {
+  if (!session.isPlaying) {
+    return;
+  }
+
+  session.position += seconds;
+}
+
+export function selectSong(songId: string): boolean {
+  const queueItemIndex = internalQueue.findIndex(
+    (item) => item.song.id === songId,
+  );
+
+  if (queueItemIndex === -1) {
+    return false;
+  }
+
+  const [selectedItem] = internalQueue.splice(
+    queueItemIndex,
+    1,
+  );
+
+  if (!selectedItem) {
+    return false;
+  }
+
+  session.currentSong = selectedItem.song;
+  session.position = 0;
+  session.isPlaying = false;
+
+  return true;
+}
+
 export function resetSessionForTests(): void {
   session.currentSong = null;
   session.isPlaying = false;

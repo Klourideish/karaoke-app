@@ -8,7 +8,9 @@ import {
   play,
   resetSessionForTests,
   seek,
+  selectSong,
   voteForSong,
+  advancePosition,
 } from "./sessionManager";
 
 const testSong: Song = {
@@ -80,6 +82,20 @@ describe("sessionManager", () => {
     expect(accepted).toBe(true);
     expect(getSession().queue[0]?.votes).toBe(1);
   });
+
+  it("advances position while playing", () => {
+  play();
+
+  advancePosition(1);
+
+  expect(getSession().position).toBe(1);
+});
+
+it("does not advance position while paused", () => {
+  advancePosition(1);
+
+  expect(getSession().position).toBe(0);
+});
 
   it(
     "rejects repeat votes from the same user for the same song",
@@ -166,4 +182,36 @@ describe("sessionManager", () => {
       ]);
     },
   );
+
+  it("selects a queued song as the current song", () => {
+  addToQueue(testSong);
+
+  const selected = selectSong(testSong.id);
+
+  expect(selected).toBe(true);
+  expect(getSession().currentSong).toEqual(testSong);
+  expect(getSession().queue).toEqual([]);
+});
+
+it("rejects selection of a song that is not queued", () => {
+  const selected = selectSong("missing-song");
+
+  expect(selected).toBe(false);
+  expect(getSession().currentSong).toBeNull();
+});
+
+it("resets playback state when selecting a song", () => {
+  addToQueue(testSong);
+
+  play();
+  seek(42);
+
+  selectSong(testSong.id);
+
+  expect(getSession()).toMatchObject({
+    currentSong: testSong,
+    isPlaying: false,
+    position: 0,
+  });
+});
 });

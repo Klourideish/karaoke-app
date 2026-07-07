@@ -8,10 +8,12 @@ import type { Song } from "shared";
 import { scanLibrary } from "./library/scanLibrary";
 import {
   addToQueue,
+  advancePosition,
   getSession,
   pause,
   play,
   seek,
+  selectSong,
   voteForSong,
 } from "./session/sessionManager";
 
@@ -78,6 +80,14 @@ io.on("connection", (socket) => {
   }
 });
 
+socket.on("select-song", (songId: string) => {
+  const selected = selectSong(songId);
+
+  if (selected) {
+    io.emit("sync-state", getSession());
+  }
+});
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
@@ -97,6 +107,35 @@ app.get("/library", async (_req, res) => {
   : path.resolve(process.cwd(), "../music");
   console.log("Scanning library path:", libraryPath);
 
+  app.get("/media/audio/:songId", async (req, res) => {
+  const libraryPath = process.env.MUSIC_DIR
+    ? path.resolve(process.env.MUSIC_DIR)
+    : path.resolve(process.cwd(), "../music");
+
+  try {
+    const songs = await scanLibrary(libraryPath);
+
+    const song = songs.find(
+      (item) => item.id === req.params.songId,
+    );
+
+    if (!song) {
+      res.status(404).json({
+        error: "Song not found",
+      });
+      return;
+    }
+
+    res.sendFile(song.audioPath);
+  } catch (error) {
+    console.error("Failed to serve audio:", error);
+
+    res.status(500).json({
+      error: "Failed to serve audio",
+    });
+  }
+});
+
   try {
     const songs = await scanLibrary(libraryPath);
 
@@ -111,7 +150,12 @@ app.get("/library", async (_req, res) => {
     });
   }
 });
+const CLOCK_INTERVAL_MS = 1000;
 
+setInterval(() => {
+  advancePosition(CLOCK_INTERVAL_MS / 1000);
+  io.emit("sync-state", getSession());
+}, CLOCK_INTERVAL_MS);
 // ----- START SERVER -----
 server.listen(3001, () => {
   console.log("🎤 Karaoke backend running on http://localhost:3001");

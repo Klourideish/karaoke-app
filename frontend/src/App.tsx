@@ -5,6 +5,7 @@ import type { SessionState } from "./types/session";
 import { useLibraryStore } from "./stores/libraryStore";
 import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
+import { AudioPlayer } from "./components/player/AudioPlayer";
 
 function App() {
   const socketConnected = useSessionStore((state) => state.socketConnected);
@@ -79,6 +80,7 @@ function App() {
       <p>Queue size: {queue.length}</p>
       <SongBrowser />
       <QueuePanel />
+      <AudioPlayer />
       <button onClick={handlePlay}>Play</button>
       <button onClick={handlePause}>Pause</button>
       <button onClick={handleSeekForward}>Seek +10s</button>
