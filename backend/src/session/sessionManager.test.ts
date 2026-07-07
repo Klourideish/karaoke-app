@@ -4,6 +4,7 @@ import type { Song } from "shared";
 import {
   addToQueue,
   getSession,
+  markPlaybackReady,
   pause,
   play,
   resetSessionForTests,
@@ -32,6 +33,7 @@ describe("sessionManager", () => {
     expect(getSession()).toMatchObject({
       currentSong: null,
       isPlaying: false,
+      playbackReady: false,
       position: 0,
       queue: [],
     });
@@ -212,7 +214,55 @@ describe("sessionManager", () => {
     expect(getSession()).toMatchObject({
       currentSong: testSong,
       isPlaying: false,
+      playbackReady: false,
       position: 0,
+    });
+  });
+
+  it("selecting a song resets playbackReady to false", () => {
+    addToQueue(testSong);
+    markPlaybackReady();
+
+    selectSong(testSong.id);
+
+    expect(getSession()).toMatchObject({
+      currentSong: testSong,
+      playbackReady: false,
+    });
+  });
+
+  it("markPlaybackReady sets playbackReady to true", () => {
+    markPlaybackReady();
+
+    expect(getSession()).toMatchObject({
+      isPlaying: false,
+      playbackReady: true,
+    });
+  });
+
+  it("selecting another song resets playbackReady back to false", () => {
+    const songA: Song = {
+      ...testSong,
+      id: "song-a",
+      title: "A",
+    };
+
+    const songB: Song = {
+      ...testSong,
+      id: "song-b",
+      title: "B",
+    };
+
+    addToQueue(songA);
+    selectSong(songA.id);
+    markPlaybackReady();
+    addToQueue(songB);
+
+    selectSong(songB.id);
+
+    expect(getSession()).toMatchObject({
+      currentSong: songB,
+      playbackReady: false,
     });
   });
 
@@ -248,6 +298,7 @@ describe("sessionManager", () => {
       expect(getSession()).toMatchObject({
         currentSong: songB,
         isPlaying: false,
+        playbackReady: false,
         position: 0,
       });
       expect(

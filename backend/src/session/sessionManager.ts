@@ -14,6 +14,7 @@ export interface QueueItem {
 export interface SessionState {
   currentSong: Song | null;
   isPlaying: boolean;
+  playbackReady: boolean;
   position: number;
   queue: QueueItem[];
 }
@@ -23,6 +24,7 @@ const internalQueue: InternalQueueItem[] = [];
 const session = {
   currentSong: null as Song | null,
   isPlaying: false,
+  playbackReady: false,
   position: 0,
 };
 
@@ -49,6 +51,7 @@ export function getSession(): SessionState {
   return {
     currentSong: session.currentSong,
     isPlaying: session.isPlaying,
+    playbackReady: session.playbackReady,
     position: session.position,
     queue: getPublicQueue(),
   };
@@ -66,6 +69,10 @@ export function seek(position: number): void {
   session.position = position;
 }
 
+export function markPlaybackReady(): void {
+  session.playbackReady = true;
+}
+
 export function selectNextQueuedSong(): boolean {
   const [nextItem] = getPublicQueue();
 
@@ -78,6 +85,7 @@ export function selectNextQueuedSong(): boolean {
 
 export function finishPlayback(): void {
   session.isPlaying = false;
+  session.playbackReady = false;
   session.position = 0;
   selectNextQueuedSong();
 }
@@ -152,6 +160,7 @@ export function selectSong(songId: string): boolean {
   session.currentSong = selectedItem.song;
   session.position = 0;
   session.isPlaying = false;
+  session.playbackReady = false;
 
   return true;
 }
@@ -159,6 +168,7 @@ export function selectSong(songId: string): boolean {
 export function resetSessionForTests(): void {
   session.currentSong = null;
   session.isPlaying = false;
+  session.playbackReady = false;
   session.position = 0;
 
   internalQueue.length = 0;

@@ -11,6 +11,7 @@ import {
   advancePosition,
   finishPlayback,
   getSession,
+  markPlaybackReady,
   pause,
   play,
   seek,
@@ -67,6 +68,16 @@ io.on("connection", (socket) => {
 
   socket.on("finish-playback", () => {
     finishPlayback();
+    io.emit("sync-state", getSession());
+  });
+
+  socket.on("ready-for-playback", (songId: string) => {
+    if (songId !== getSession().currentSong?.id) {
+      return;
+    }
+
+    markPlaybackReady();
+    play();
     io.emit("sync-state", getSession());
   });
 

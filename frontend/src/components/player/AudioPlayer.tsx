@@ -63,6 +63,9 @@ export function AudioPlayer() {
         onTimeUpdate={(event) => {
           setPlaybackPosition(event.currentTarget.currentTime);
         }}
+        onCanPlay={() => {
+          socket.emit("ready-for-playback", currentSong.id);
+        }}
         onEnded={() => {
           socket.emit("finish-playback");
         }}
