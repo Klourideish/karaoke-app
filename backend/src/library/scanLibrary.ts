@@ -5,31 +5,49 @@ import { createHash } from "node:crypto";
 import type { Song } from "shared";
 import { parseSongFilename } from "./parseSongFilename";
 
-export async function scanLibrary(
-  libraryPath: string,
-): Promise<Song[]> {
-  const entries = await readdir(libraryPath, {
+async function collectFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, {
     withFileTypes: true,
   });
 
-  const files = entries
-    .filter((entry) => entry.isFile())
-    .map((entry) => entry.name);
+  const files: string[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...await collectFiles(fullPath));
+      continue;
+    }
+
+    if (entry.isFile()) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+export async function scanLibrary(
+  libraryPath: string,
+): Promise<Song[]> {
+  const filePaths = await collectFiles(libraryPath);
 
   const fileLookup = new Map(
-    files.map((fileName) => [
-      fileName.toLowerCase(),
-      fileName,
+    filePaths.map((filePath) => [
+      filePath.toLowerCase(),
+      filePath,
     ]),
   );
 
   const songs: Song[] = [];
 
-  for (const fileName of files) {
-    if (path.extname(fileName).toLowerCase() !== ".opus") {
+  for (const audioPath of filePaths) {
+    if (path.extname(audioPath).toLowerCase() !== ".opus") {
       continue;
     }
 
+    const fileName = path.basename(audioPath);
     const fileStem = path.basename(
       fileName,
       path.extname(fileName),
@@ -41,21 +59,18 @@ export async function scanLibrary(
       continue;
     }
 
-    const expectedLyricName = `${fileStem}.ttml`;
-
-    const actualLyricName = fileLookup.get(
-      expectedLyricName.toLowerCase(),
+    const lyricPath = path.join(
+      path.dirname(audioPath),
+      `${fileStem}.ttml`,
     );
 
-    if (!actualLyricName) {
+    const actualLyricPath = fileLookup.get(
+      lyricPath.toLowerCase(),
+    );
+
+    if (!actualLyricPath) {
       continue;
     }
-
-    const audioPath = path.join(libraryPath, fileName);
-    const lyricPath = path.join(
-      libraryPath,
-      actualLyricName,
-    );
 
     const id = createHash("sha256")
       .update(audioPath.toLowerCase())
@@ -68,7 +83,7 @@ export async function scanLibrary(
       artist: parsed.artist,
       title: parsed.title,
       audioPath,
-      lyricPath,
+      lyricPath: actualLyricPath,
     });
   }
 

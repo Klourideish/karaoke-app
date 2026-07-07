@@ -18,6 +18,7 @@ import {
 const app = express();
 const server = http.createServer(app);
 
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -35,9 +36,16 @@ const io = new Server(server, {
 
 // ----- SOCKET LOGIC -----
 io.on("connection", (socket) => {
+  const clientId =
+    typeof socket.handshake.auth.clientId === "string"
+      ? socket.handshake.auth.clientId
+      : socket.id;
+
   console.log("Client connected:", socket.id);
 
   socket.emit("sync-state", getSession());
+
+  // rest of handlers...
 
   socket.on("play", () => {
     play();
@@ -63,7 +71,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("vote", (songId: string) => {
-  const accepted = voteForSong(songId, socket.id);
+  const accepted = voteForSong(songId, clientId);
 
   if (accepted) {
     io.emit("sync-state", getSession());
@@ -84,7 +92,10 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/library", async (_req, res) => {
-  const libraryPath = path.resolve(process.cwd(), "../music");
+  const libraryPath = process.env.MUSIC_DIR
+  ? path.resolve(process.env.MUSIC_DIR)
+  : path.resolve(process.cwd(), "../music");
+  console.log("Scanning library path:", libraryPath);
 
   try {
     const songs = await scanLibrary(libraryPath);
