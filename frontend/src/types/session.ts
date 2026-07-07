@@ -1,11 +1,12 @@
+import type { Song } from "shared";
+
 export interface QueueItem {
-  title: string;
-  artist: string;
+  song: Song;
   votes: number;
 }
 
 export interface SessionState {
-  currentSong: string | null;
+  currentSong: Song | null;
   isPlaying: boolean;
   position: number;
   queue: QueueItem[];

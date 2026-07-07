@@ -2,19 +2,26 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
+import path from "node:path";
+import type { Song } from "shared";
 
-interface QueueItem {
-  title: string;
-  artist: string;
-  votes: number;
-}
+import { scanLibrary } from "./library/scanLibrary";
+import {
+  addToQueue,
+  getSession,
+  pause,
+  play,
+  seek,
+} from "./session/sessionManager";
 
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors({
-  origin: "http://localhost:5173",
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  }),
+);
 
 app.use(express.json());
 
@@ -25,52 +32,33 @@ const io = new Server(server, {
   },
 });
 
-// ----- GLOBAL SESSION STATE -----
-const session = {
-  currentSong: null as string | null,
-  isPlaying: false,
-  position: 0,
-  queue: [] as QueueItem[],
-};
-
 // ----- SOCKET LOGIC -----
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
-  // Send current state immediately
-  socket.emit("sync-state", session);
+  socket.emit("sync-state", getSession());
 
   socket.on("play", () => {
-    session.isPlaying = true;
-    io.emit("sync-state", session);
+    play();
+    io.emit("sync-state", getSession());
   });
 
   socket.on("pause", () => {
-    session.isPlaying = false;
-    io.emit("sync-state", session);
+    pause();
+    io.emit("sync-state", getSession());
   });
 
-  socket.on("seek", (pos: number) => {
-    session.position = pos;
-    io.emit("sync-state", session);
+  socket.on("seek", (position: number) => {
+    seek(position);
+    io.emit("sync-state", getSession());
   });
 
-  socket.on("add-to-queue", (song) => {
-    session.queue.push({
-      ...song,
-      votes: 0,
-    });
+  socket.on("add-to-queue", (song: Song) => {
+    const added = addToQueue(song);
 
-    io.emit("sync-state", session);
-  });
-
-  socket.on("vote", (index: number) => {
-    if (session.queue[index]) {
-      session.queue[index].votes++;
-      session.queue.sort((a, b) => b.votes - a.votes);
+    if (added) {
+      io.emit("sync-state", getSession());
     }
-
-    io.emit("sync-state", session);
   });
 
   socket.on("disconnect", () => {
@@ -84,6 +72,24 @@ app.get("/health", (_req, res) => {
     status: "ok",
     service: "karaoke-backend",
   });
+});
+
+app.get("/library", async (_req, res) => {
+  const libraryPath = path.resolve(process.cwd(), "../music");
+
+  try {
+    const songs = await scanLibrary(libraryPath);
+
+    res.json({
+      songs,
+    });
+  } catch (error) {
+    console.error("Failed to scan library:", error);
+
+    res.status(500).json({
+      error: "Failed to scan library",
+    });
+  }
 });
 
 // ----- START SERVER -----

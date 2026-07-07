@@ -2,6 +2,9 @@ import { useEffect } from "react";
 import { socket } from "./lib/socket";
 import { useSessionStore } from "./stores/sessionStore";
 import type { SessionState } from "./types/session";
+import { useLibraryStore } from "./stores/libraryStore";
+import { SongBrowser } from "./components/library/SongBrowser";
+import { QueuePanel } from "./components/queue/QueuePanel";
 
 function App() {
   const socketConnected = useSessionStore((state) => state.socketConnected);
@@ -15,6 +18,7 @@ function App() {
   );
 
   const setSession = useSessionStore((state) => state.setSession);
+  const fetchLibrary = useLibraryStore((state) => state.fetchLibrary);
 
   useEffect(() => {
     const handleConnect = () => {
@@ -36,6 +40,9 @@ function App() {
     if (socket.connected) {
       setSocketConnected(true);
     }
+
+    // Fetch the song library when App loads
+    fetchLibrary();
 
     return () => {
       socket.off("connect", handleConnect);
@@ -61,11 +68,17 @@ function App() {
       <h1>Karaoke System</h1>
 
       <p>Backend: {socketConnected ? "Connected" : "Disconnected"}</p>
-      <p>Current song: {currentSong ?? "No song selected"}</p>
+      <p>
+       Current song:{" "}
+       {currentSong
+         ? `${currentSong.artist} - ${currentSong.title}`
+         : "No song selected"}
+      </p>
       <p>Playback: {isPlaying ? "Playing" : "Paused"}</p>
       <p>Position: {position} seconds</p>
       <p>Queue size: {queue.length}</p>
-
+      <SongBrowser />
+      <QueuePanel />
       <button onClick={handlePlay}>Play</button>
       <button onClick={handlePause}>Pause</button>
       <button onClick={handleSeekForward}>Seek +10s</button>
