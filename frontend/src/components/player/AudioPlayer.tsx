@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { usePlaybackClockStore } from "../../stores/playbackClockStore";
 import { socket } from "../../lib/socket";
 
 export function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const currentSong = useSessionStore((state) => state.currentSong);
   const isPlaying = useSessionStore((state) => state.isPlaying);
@@ -15,6 +16,7 @@ export function AudioPlayer() {
   );
 
   useEffect(() => {
+    setAudioError(null);
     setPlaybackPosition(0);
 
     const audio = audioRef.current;
@@ -57,6 +59,8 @@ export function AudioPlayer() {
   }
 
   const audioUrl = `http://localhost:3001/media/audio/${currentSong.id}`;
+  const isCurrentAudioEvent = (audio: HTMLAudioElement) =>
+    audio.currentSrc === audioUrl || audio.currentSrc === "";
 
   return (
     <section>
@@ -66,6 +70,8 @@ export function AudioPlayer() {
         Now loaded: {currentSong.artist} - {currentSong.title}
       </p>
 
+      {audioError && <p>Audio error: {audioError}</p>}
+
       <audio
         ref={audioRef}
         controls
@@ -74,7 +80,20 @@ export function AudioPlayer() {
           setPlaybackPosition(event.currentTarget.currentTime);
         }}
         onCanPlay={() => {
+          const audio = audioRef.current;
+
+          if (!audio || audioError || !isCurrentAudioEvent(audio)) {
+            return;
+          }
+
           socket.emit("ready-for-playback", currentSong.id);
+        }}
+        onError={(event) => {
+          if (!isCurrentAudioEvent(event.currentTarget)) {
+            return;
+          }
+
+          setAudioError("Failed to load audio.");
         }}
         onEnded={() => {
           socket.emit("finish-playback");

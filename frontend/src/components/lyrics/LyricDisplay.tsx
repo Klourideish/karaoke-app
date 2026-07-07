@@ -5,76 +5,87 @@ import { usePlaybackClockStore } from "../../stores/playbackClockStore";
 
 export function LyricDisplay() {
   const currentSong = useSessionStore(
-  (state) => state.currentSong,
-);
+    (state) => state.currentSong,
+  );
   const position = usePlaybackClockStore(
-  (state) => state.position,
-);
+    (state) => state.position,
+  );
 
   const [lines, setLines] = useState<LyricLine[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  if (!currentSong) {
     setLines([]);
     setError(null);
-    return;
-  }
 
-  const songId = currentSong.id;
-
-  async function loadLyrics() {
-    try {
-      setError(null);
-
-      const response = await fetch(
-        `http://localhost:3001/media/lyrics/${songId}`,
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to load lyrics");
-      }
-
-      const ttml = await response.text();
-
-      setLines(parseTtml(ttml));
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Unknown error",
-      );
-
-      setLines([]);
+    if (!currentSong) {
+      return;
     }
-  }
 
-  void loadLyrics();
-}, [currentSong]);
+    let cancelled = false;
+    const songId = currentSong.id;
+
+    async function loadLyrics() {
+      try {
+        const response = await fetch(
+          `http://localhost:3001/media/lyrics/${songId}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to load lyrics (${response.status})`,
+          );
+        }
+
+        const ttml = await response.text();
+        const parsedLines = parseTtml(ttml);
+
+        if (!cancelled) {
+          setLines(parsedLines);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Unknown lyrics error",
+          );
+
+          setLines([]);
+        }
+      }
+    }
+
+    void loadLyrics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSong?.id]);
 
   const lyricState = useMemo(() => {
-  const currentIndex = lines.findIndex(
-    (line) => position >= line.start && position < line.end,
-  );
-
-  if (currentIndex === -1) {
-    const nextLine = lines.find(
-      (line) => line.start > position,
+    const currentIndex = lines.findIndex(
+      (line) => position >= line.start && position < line.end,
     );
 
+    if (currentIndex === -1) {
+      const nextLine = lines.find(
+        (line) => line.start > position,
+      );
+
+      return {
+        currentLine: null,
+        nextLine: nextLine ?? null,
+      };
+    }
+
     return {
-      currentLine: null,
-      nextLine: nextLine ?? null,
+      currentLine: lines[currentIndex] ?? null,
+      nextLine: lines[currentIndex + 1] ?? null,
     };
-  }
+  }, [lines, position]);
 
-  return {
-    currentLine: lines[currentIndex] ?? null,
-    nextLine: lines[currentIndex + 1] ?? null,
-  };
-}, [lines, position]);
-
-const { currentLine, nextLine } = lyricState;
+  const { currentLine, nextLine } = lyricState;
 
   if (!currentSong) {
     return null;
@@ -87,51 +98,50 @@ const { currentLine, nextLine } = lyricState;
       {error && <p>Lyrics error: {error}</p>}
 
       {!error && !currentLine && !nextLine && (
-  <p>...</p>
-)}
+        <p>...</p>
+      )}
 
-{currentLine && (
-  <p
-    style={{
-      fontSize: "2rem",
-      fontWeight: "bold",
-    }}
-  >
-    {currentLine.words.map((word, index) => {
-      const isActive =
-        position >= word.start &&
-        position < word.end;
-
-      const isCompleted =
-        position >= word.end;
-
-      return (
-        <span
-          key={`${word.start}-${index}`}
+      {currentLine && (
+        <p
           style={{
-            opacity:
-              isActive || isCompleted
-                ? 1
-                : 0.4,
+            fontSize: "2rem",
+            fontWeight: "bold",
           }}
         >
-          {word.text}
-        </span>
-      );
-    })}
-  </p>
-)}
+          {currentLine.words.map((word, index) => {
+            const isActive =
+              position >= word.start &&
+              position < word.end;
 
-{nextLine && (
-  <p
-    style={{
-      fontSize: "1.25rem",
-      opacity: 0.6,
-    }}
-  >
-    {nextLine.text}
-  </p>
-)}
+            const isCompleted = position >= word.end;
+
+            return (
+              <span
+                key={`${word.start}-${index}`}
+                style={{
+                  opacity:
+                    isActive || isCompleted
+                      ? 1
+                      : 0.4,
+                }}
+              >
+                {word.text}
+              </span>
+            );
+          })}
+        </p>
+      )}
+
+      {nextLine && (
+        <p
+          style={{
+            fontSize: "1.25rem",
+            opacity: 0.6,
+          }}
+        >
+          {nextLine.text}
+        </p>
+      )}
     </section>
   );
 }
