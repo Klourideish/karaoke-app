@@ -9,8 +9,9 @@ import {
   resetSessionForTests,
   seek,
   selectSong,
-  voteForSong,
   advancePosition,
+  finishPlayback,
+  voteForSong,
 } from "./sessionManager";
 
 const testSong: Song = {
@@ -84,18 +85,18 @@ describe("sessionManager", () => {
   });
 
   it("advances position while playing", () => {
-  play();
+    play();
 
-  advancePosition(1);
+    advancePosition(1);
 
-  expect(getSession().position).toBe(1);
-});
+    expect(getSession().position).toBe(1);
+  });
 
-it("does not advance position while paused", () => {
-  advancePosition(1);
+  it("does not advance position while paused", () => {
+    advancePosition(1);
 
-  expect(getSession().position).toBe(0);
-});
+    expect(getSession().position).toBe(0);
+  });
 
   it(
     "rejects repeat votes from the same user for the same song",
@@ -184,34 +185,103 @@ it("does not advance position while paused", () => {
   );
 
   it("selects a queued song as the current song", () => {
-  addToQueue(testSong);
+    addToQueue(testSong);
 
-  const selected = selectSong(testSong.id);
+    const selected = selectSong(testSong.id);
 
-  expect(selected).toBe(true);
-  expect(getSession().currentSong).toEqual(testSong);
-  expect(getSession().queue).toEqual([]);
-});
-
-it("rejects selection of a song that is not queued", () => {
-  const selected = selectSong("missing-song");
-
-  expect(selected).toBe(false);
-  expect(getSession().currentSong).toBeNull();
-});
-
-it("resets playback state when selecting a song", () => {
-  addToQueue(testSong);
-
-  play();
-  seek(42);
-
-  selectSong(testSong.id);
-
-  expect(getSession()).toMatchObject({
-    currentSong: testSong,
-    isPlaying: false,
-    position: 0,
+    expect(selected).toBe(true);
+    expect(getSession().currentSong).toEqual(testSong);
+    expect(getSession().queue).toEqual([]);
   });
-});
+
+  it("rejects selection of a song that is not queued", () => {
+    const selected = selectSong("missing-song");
+
+    expect(selected).toBe(false);
+    expect(getSession().currentSong).toBeNull();
+  });
+
+  it("resets playback state when selecting a song", () => {
+    addToQueue(testSong);
+
+    play();
+    seek(42);
+
+    selectSong(testSong.id);
+
+    expect(getSession()).toMatchObject({
+      currentSong: testSong,
+      isPlaying: false,
+      position: 0,
+    });
+  });
+
+  it(
+    "finishPlayback selects the highest-voted queued song after current song finishes",
+    () => {
+      const currentSong: Song = {
+        ...testSong,
+        id: "current-song",
+        title: "Current Song",
+      };
+
+      const songA: Song = {
+        ...testSong,
+        id: "song-a",
+        title: "A",
+      };
+
+      const songB: Song = {
+        ...testSong,
+        id: "song-b",
+        title: "B",
+      };
+
+      addToQueue(currentSong);
+      selectSong(currentSong.id);
+      addToQueue(songA);
+      addToQueue(songB);
+      voteForSong(songB.id, "user-1");
+
+      finishPlayback();
+
+      expect(getSession()).toMatchObject({
+        currentSong: songB,
+        isPlaying: false,
+        position: 0,
+      });
+      expect(
+        getSession().queue.map((item) => item.song.id),
+      ).toEqual(["song-a"]);
+    },
+  );
+
+  it("finishPlayback preserves paused state", () => {
+    addToQueue(testSong);
+    selectSong(testSong.id);
+
+    finishPlayback();
+
+    expect(getSession().isPlaying).toBe(false);
+  });
+
+  it("finishPlayback resets position", () => {
+    addToQueue(testSong);
+    selectSong(testSong.id);
+
+    play();
+    seek(42);
+
+    finishPlayback();
+
+    expect(getSession().position).toBe(0);
+  });
+
+  it("finishPlayback does not crash with empty queue", () => {
+    addToQueue(testSong);
+    selectSong(testSong.id);
+
+    expect(() => finishPlayback()).not.toThrow();
+    expect(getSession().currentSong).toEqual(testSong);
+  });
 });

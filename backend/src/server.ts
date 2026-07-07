@@ -9,6 +9,7 @@ import { scanLibrary } from "./library/scanLibrary";
 import {
   addToQueue,
   advancePosition,
+  finishPlayback,
   getSession,
   pause,
   play,
@@ -61,6 +62,11 @@ io.on("connection", (socket) => {
 
   socket.on("seek", (position: number) => {
     seek(position);
+    io.emit("sync-state", getSession());
+  });
+
+  socket.on("finish-playback", () => {
+    finishPlayback();
     io.emit("sync-state", getSession());
   });
 

@@ -66,6 +66,22 @@ export function seek(position: number): void {
   session.position = position;
 }
 
+export function selectNextQueuedSong(): boolean {
+  const [nextItem] = getPublicQueue();
+
+  if (!nextItem) {
+    return false;
+  }
+
+  return selectSong(nextItem.song.id);
+}
+
+export function finishPlayback(): void {
+  session.isPlaying = false;
+  session.position = 0;
+  selectNextQueuedSong();
+}
+
 export function addToQueue(song: Song): boolean {
   const alreadyQueued = internalQueue.some(
     (item) => item.song.id === song.id,

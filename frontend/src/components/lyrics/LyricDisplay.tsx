@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { parseTtml, type LyricLine } from "../../lyrics/parseTtml";
+import { usePlaybackClockStore } from "../../stores/playbackClockStore";
 
 export function LyricDisplay() {
-  const currentSong = useSessionStore((state) => state.currentSong);
-  const position = useSessionStore((state) => state.position);
+  const currentSong = useSessionStore(
+  (state) => state.currentSong,
+);
+  const position = usePlaybackClockStore(
+  (state) => state.position,
+);
 
   const [lines, setLines] = useState<LyricLine[]>([]);
   const [error, setError] = useState<string | null>(null);

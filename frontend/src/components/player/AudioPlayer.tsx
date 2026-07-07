@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
+import { usePlaybackClockStore } from "../../stores/playbackClockStore";
+import { socket } from "../../lib/socket";
 
 export function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -7,6 +9,10 @@ export function AudioPlayer() {
   const currentSong = useSessionStore((state) => state.currentSong);
   const isPlaying = useSessionStore((state) => state.isPlaying);
   const position = useSessionStore((state) => state.position);
+
+  const setPlaybackPosition = usePlaybackClockStore(
+    (state) => state.setPosition,
+  );
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -19,6 +25,7 @@ export function AudioPlayer() {
 
     if (timeDifference > 0.5) {
       audio.currentTime = position;
+      setPlaybackPosition(position);
     }
 
     if (isPlaying) {
@@ -28,7 +35,7 @@ export function AudioPlayer() {
     } else {
       audio.pause();
     }
-  }, [isPlaying, position, currentSong?.id]);
+  }, [isPlaying, position, currentSong?.id, setPlaybackPosition]);
 
   if (!currentSong) {
     return (
@@ -53,6 +60,12 @@ export function AudioPlayer() {
         ref={audioRef}
         controls
         src={audioUrl}
+        onTimeUpdate={(event) => {
+          setPlaybackPosition(event.currentTarget.currentTime);
+        }}
+        onEnded={() => {
+          socket.emit("finish-playback");
+        }}
       />
     </section>
   );
