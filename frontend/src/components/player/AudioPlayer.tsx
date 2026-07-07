@@ -15,6 +15,16 @@ export function AudioPlayer() {
   );
 
   useEffect(() => {
+    setPlaybackPosition(0);
+
+    const audio = audioRef.current;
+
+    if (audio) {
+      audio.currentTime = 0;
+    }
+  }, [currentSong?.id, setPlaybackPosition]);
+
+  useEffect(() => {
     const audio = audioRef.current;
 
     if (!audio) {
