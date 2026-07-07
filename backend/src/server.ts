@@ -9,6 +9,7 @@ import { scanLibrary } from "./library/scanLibrary";
 import {
   addToQueue,
   advancePosition,
+  clearAutoStartPending,
   finishPlayback,
   getSession,
   markPlaybackReady,
@@ -72,12 +73,19 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ready-for-playback", (songId: string) => {
-    if (songId !== getSession().currentSong?.id) {
+    const session = getSession();
+
+    if (songId !== session.currentSong?.id) {
       return;
     }
 
     markPlaybackReady();
-    play();
+
+    if (session.autoStartPending) {
+      play();
+      clearAutoStartPending();
+    }
+
     io.emit("sync-state", getSession());
   });
 

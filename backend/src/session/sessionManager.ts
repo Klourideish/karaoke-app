@@ -13,6 +13,7 @@ export interface QueueItem {
 
 export interface SessionState {
   currentSong: Song | null;
+  autoStartPending: boolean;
   isPlaying: boolean;
   playbackReady: boolean;
   position: number;
@@ -23,6 +24,7 @@ const internalQueue: InternalQueueItem[] = [];
 
 const session = {
   currentSong: null as Song | null,
+  autoStartPending: false,
   isPlaying: false,
   playbackReady: false,
   position: 0,
@@ -50,6 +52,7 @@ function getPublicQueue(): QueueItem[] {
 export function getSession(): SessionState {
   return {
     currentSong: session.currentSong,
+    autoStartPending: session.autoStartPending,
     isPlaying: session.isPlaying,
     playbackReady: session.playbackReady,
     position: session.position,
@@ -73,6 +76,10 @@ export function markPlaybackReady(): void {
   session.playbackReady = true;
 }
 
+export function clearAutoStartPending(): void {
+  session.autoStartPending = false;
+}
+
 export function selectNextQueuedSong(): boolean {
   const [nextItem] = getPublicQueue();
 
@@ -80,12 +87,13 @@ export function selectNextQueuedSong(): boolean {
     return false;
   }
 
-  return selectSong(nextItem.song.id);
+  return selectQueuedSong(nextItem.song.id, true);
 }
 
 export function finishPlayback(): void {
   session.isPlaying = false;
   session.playbackReady = false;
+  session.autoStartPending = false;
   session.position = 0;
   selectNextQueuedSong();
 }
@@ -140,6 +148,13 @@ export function advancePosition(seconds: number): void {
 }
 
 export function selectSong(songId: string): boolean {
+  return selectQueuedSong(songId, false);
+}
+
+function selectQueuedSong(
+  songId: string,
+  autoStartPending: boolean,
+): boolean {
   const queueItemIndex = internalQueue.findIndex(
     (item) => item.song.id === songId,
   );
@@ -158,6 +173,7 @@ export function selectSong(songId: string): boolean {
   }
 
   session.currentSong = selectedItem.song;
+  session.autoStartPending = autoStartPending;
   session.position = 0;
   session.isPlaying = false;
   session.playbackReady = false;
@@ -167,6 +183,7 @@ export function selectSong(songId: string): boolean {
 
 export function resetSessionForTests(): void {
   session.currentSong = null;
+  session.autoStartPending = false;
   session.isPlaying = false;
   session.playbackReady = false;
   session.position = 0;

@@ -3,12 +3,14 @@ import type { Song } from "shared";
 
 import {
   addToQueue,
+  clearAutoStartPending,
   getSession,
   markPlaybackReady,
   pause,
   play,
   resetSessionForTests,
   seek,
+  selectNextQueuedSong,
   selectSong,
   advancePosition,
   finishPlayback,
@@ -32,6 +34,7 @@ describe("sessionManager", () => {
   it("starts paused at position zero with an empty queue", () => {
     expect(getSession()).toMatchObject({
       currentSong: null,
+      autoStartPending: false,
       isPlaying: false,
       playbackReady: false,
       position: 0,
@@ -213,6 +216,21 @@ describe("sessionManager", () => {
 
     expect(getSession()).toMatchObject({
       currentSong: testSong,
+      autoStartPending: false,
+      isPlaying: false,
+      playbackReady: false,
+      position: 0,
+    });
+  });
+
+  it("manual select does not set autoStartPending", () => {
+    addToQueue(testSong);
+
+    selectSong(testSong.id);
+
+    expect(getSession()).toMatchObject({
+      currentSong: testSong,
+      autoStartPending: false,
       isPlaying: false,
       playbackReady: false,
       position: 0,
@@ -227,6 +245,7 @@ describe("sessionManager", () => {
 
     expect(getSession()).toMatchObject({
       currentSong: testSong,
+      autoStartPending: false,
       playbackReady: false,
     });
   });
@@ -235,6 +254,19 @@ describe("sessionManager", () => {
     markPlaybackReady();
 
     expect(getSession()).toMatchObject({
+      isPlaying: false,
+      playbackReady: true,
+    });
+  });
+
+  it("readiness alone does not start manual selections", () => {
+    addToQueue(testSong);
+    selectSong(testSong.id);
+
+    markPlaybackReady();
+
+    expect(getSession()).toMatchObject({
+      autoStartPending: false,
       isPlaying: false,
       playbackReady: true,
     });
@@ -262,7 +294,39 @@ describe("sessionManager", () => {
 
     expect(getSession()).toMatchObject({
       currentSong: songB,
+      autoStartPending: false,
       playbackReady: false,
+    });
+  });
+
+  it("automatic queue advancement sets autoStartPending", () => {
+    addToQueue(testSong);
+
+    selectNextQueuedSong();
+
+    expect(getSession()).toMatchObject({
+      currentSong: testSong,
+      autoStartPending: true,
+      isPlaying: false,
+      playbackReady: false,
+      position: 0,
+    });
+  });
+
+  it("auto-start clears autoStartPending after playback begins", () => {
+    addToQueue(testSong);
+    selectNextQueuedSong();
+    markPlaybackReady();
+
+    if (getSession().autoStartPending) {
+      play();
+      clearAutoStartPending();
+    }
+
+    expect(getSession()).toMatchObject({
+      autoStartPending: false,
+      isPlaying: true,
+      playbackReady: true,
     });
   });
 
@@ -297,6 +361,7 @@ describe("sessionManager", () => {
 
       expect(getSession()).toMatchObject({
         currentSong: songB,
+        autoStartPending: true,
         isPlaying: false,
         playbackReady: false,
         position: 0,
