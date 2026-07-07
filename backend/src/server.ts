@@ -136,6 +136,36 @@ app.get("/library", async (_req, res) => {
   }
 });
 
+app.get("/media/lyrics/:songId", async (req, res) => {
+  const libraryPath = process.env.MUSIC_DIR
+    ? path.resolve(process.env.MUSIC_DIR)
+    : path.resolve(process.cwd(), "../music");
+
+  try {
+    const songs = await scanLibrary(libraryPath);
+
+    const song = songs.find(
+      (item) => item.id === req.params.songId,
+    );
+
+    if (!song) {
+      res.status(404).json({
+        error: "Song not found",
+      });
+      return;
+    }
+
+    res.type("application/ttml+xml");
+    res.sendFile(song.lyricPath);
+  } catch (error) {
+    console.error("Failed to serve lyrics:", error);
+
+    res.status(500).json({
+      error: "Failed to serve lyrics",
+    });
+  }
+});
+
   try {
     const songs = await scanLibrary(libraryPath);
 

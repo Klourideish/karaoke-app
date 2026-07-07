@@ -6,6 +6,7 @@ import { useLibraryStore } from "./stores/libraryStore";
 import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
+import { LyricDisplay } from "./components/lyrics/LyricDisplay";
 
 function App() {
   const socketConnected = useSessionStore((state) => state.socketConnected);
@@ -81,6 +82,7 @@ function App() {
       <SongBrowser />
       <QueuePanel />
       <AudioPlayer />
+      <LyricDisplay />
       <button onClick={handlePlay}>Play</button>
       <button onClick={handlePause}>Pause</button>
       <button onClick={handleSeekForward}>Seek +10s</button>
