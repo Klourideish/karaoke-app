@@ -1,5 +1,11 @@
 import type { Song } from "shared";
 
+interface InternalQueueItem {
+  song: Song;
+  requestedOrder: number;
+  voterIds: Set<string>;
+}
+
 export interface QueueItem {
   song: Song;
   votes: number;
@@ -12,15 +18,40 @@ export interface SessionState {
   queue: QueueItem[];
 }
 
-const session: SessionState = {
-  currentSong: null,
+const internalQueue: InternalQueueItem[] = [];
+
+const session = {
+  currentSong: null as Song | null,
   isPlaying: false,
   position: 0,
-  queue: [],
 };
 
+let nextRequestedOrder = 0;
+
+function getPublicQueue(): QueueItem[] {
+  return [...internalQueue]
+    .sort((a, b) => {
+      const voteDifference = b.voterIds.size - a.voterIds.size;
+
+      if (voteDifference !== 0) {
+        return voteDifference;
+      }
+
+      return a.requestedOrder - b.requestedOrder;
+    })
+    .map((item) => ({
+      song: item.song,
+      votes: item.voterIds.size,
+    }));
+}
+
 export function getSession(): SessionState {
-  return session;
+  return {
+    currentSong: session.currentSong,
+    isPlaying: session.isPlaying,
+    position: session.position,
+    queue: getPublicQueue(),
+  };
 }
 
 export function play(): void {
@@ -35,15 +66,8 @@ export function seek(position: number): void {
   session.position = position;
 }
 
- export function resetSessionForTests(): void {
-  session.currentSong = null;
-  session.isPlaying = false;
-  session.position = 0;
-  session.queue = [];
-}
-
 export function addToQueue(song: Song): boolean {
-  const alreadyQueued = session.queue.some(
+  const alreadyQueued = internalQueue.some(
     (item) => item.song.id === song.id,
   );
 
@@ -51,11 +75,43 @@ export function addToQueue(song: Song): boolean {
     return false;
   }
 
-  session.queue.push({
+  internalQueue.push({
     song,
-    votes: 0,
+    requestedOrder: nextRequestedOrder,
+    voterIds: new Set(),
   });
 
+  nextRequestedOrder += 1;
 
   return true;
+}
+
+export function voteForSong(
+  songId: string,
+  voterId: string,
+): boolean {
+  const queueItem = internalQueue.find(
+    (item) => item.song.id === songId,
+  );
+
+  if (!queueItem) {
+    return false;
+  }
+
+  if (queueItem.voterIds.has(voterId)) {
+    return false;
+  }
+
+  queueItem.voterIds.add(voterId);
+
+  return true;
+}
+
+export function resetSessionForTests(): void {
+  session.currentSong = null;
+  session.isPlaying = false;
+  session.position = 0;
+
+  internalQueue.length = 0;
+  nextRequestedOrder = 0;
 }

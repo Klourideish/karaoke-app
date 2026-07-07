@@ -12,6 +12,7 @@ import {
   pause,
   play,
   seek,
+  voteForSong,
 } from "./session/sessionManager";
 
 const app = express();
@@ -60,6 +61,14 @@ io.on("connection", (socket) => {
       io.emit("sync-state", getSession());
     }
   });
+
+  socket.on("vote", (songId: string) => {
+  const accepted = voteForSong(songId, socket.id);
+
+  if (accepted) {
+    io.emit("sync-state", getSession());
+  }
+});
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);

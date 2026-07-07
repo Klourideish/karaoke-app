@@ -1,4 +1,5 @@
 import { useSessionStore } from "../../stores/sessionStore";
+import { socket } from "../../lib/socket";
 
 export function QueuePanel() {
   const queue = useSessionStore((state) => state.queue);
@@ -10,12 +11,18 @@ export function QueuePanel() {
       {queue.length === 0 && <p>No songs queued.</p>}
 
       <ol>
-        {queue.map((item, index) => (
-          <li key={`${item.song.id}-${index}`}>
-            {item.song.artist} - {item.song.title} ({item.votes} votes)
-          </li>
-        ))}
-      </ol>
+  {queue.map((item) => (
+    <li key={item.song.id}>
+      {item.song.artist} - {item.song.title} ({item.votes} votes)
+
+      <button
+        onClick={() => socket.emit("vote", item.song.id)}
+      >
+        Vote
+      </button>
+    </li>
+  ))}
+</ol>
     </section>
   );
 }
