@@ -1,3 +1,7 @@
+#root {
+  width: min(100%, 1440px);
+}
+
 .app-shell {
   min-height: 100svh;
   padding: 24px;
@@ -25,7 +29,7 @@
 
 .app-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
   gap: 24px;
   padding-top: 24px;
 }
