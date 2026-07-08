@@ -67,6 +67,18 @@
   gap: 8px;
 }
 
+.song-context-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.song-context-panel > div {
+  border: 1px solid var(--border);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
 .player-control-area {
   display: grid;
   gap: 16px;
@@ -164,6 +176,10 @@ li {
 
   .performance-area {
     min-height: auto;
+  }
+
+  .song-context-panel {
+    grid-template-columns: 1fr;
   }
 
   .performance-stage {

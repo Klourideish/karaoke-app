@@ -7,6 +7,7 @@ import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
 import { PerformanceStage } from "./components/performance/PerformanceStage";
+import { SongContextPanel } from "./components/performance/SongContextPanel";
 import { getClientId, getClientName } from "./lib/clientIdentity";
 import "./App.css";
 
@@ -149,6 +150,8 @@ function App() {
               })}
             </ul>
           </section>
+
+          <SongContextPanel />
 
           <PerformanceStage />
 
