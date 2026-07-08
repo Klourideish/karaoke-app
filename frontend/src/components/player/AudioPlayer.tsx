@@ -39,8 +39,9 @@ export function AudioPlayer() {
     }
 
     const timeDifference = Math.abs(audio.currentTime - position);
+    const correctionThreshold = isPlaying ? 2.0 : 0.5;
 
-    if (timeDifference > 0.5) {
+    if (timeDifference > correctionThreshold) {
       audio.currentTime = position;
       setPlaybackPosition(position);
     }
