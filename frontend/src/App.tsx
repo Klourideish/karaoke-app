@@ -7,6 +7,7 @@ import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
 import { LyricDisplay } from "./components/lyrics/LyricDisplay";
+import "./App.css";
 
 function App() {
   const socketConnected = useSessionStore((state) => state.socketConnected);
@@ -66,26 +67,48 @@ function App() {
   };
 
   return (
-    <main>
-      <h1>Karaoke System</h1>
+    <main className="app-shell">
+      <header className="app-status">
+        <div>
+          <h1>Karaoke System</h1>
+          <p>Backend: {socketConnected ? "Connected" : "Disconnected"}</p>
+        </div>
 
-      <p>Backend: {socketConnected ? "Connected" : "Disconnected"}</p>
-      <p>
-       Current song:{" "}
-       {currentSong
-         ? `${currentSong.artist} - ${currentSong.title}`
-         : "No song selected"}
-      </p>
-      <p>Playback: {isPlaying ? "Playing" : "Paused"}</p>
-      <p>Position: {position} seconds</p>
-      <p>Queue size: {queue.length}</p>
-      <SongBrowser />
-      <QueuePanel />
-      <AudioPlayer />
-      <LyricDisplay />
-      <button onClick={handlePlay}>Play</button>
-      <button onClick={handlePause}>Pause</button>
-      <button onClick={handleSeekForward}>Seek +10s</button>
+        <div className="status-details">
+          <p>
+            Current song:{" "}
+            {currentSong
+              ? `${currentSong.artist} - ${currentSong.title}`
+              : "No song selected"}
+          </p>
+          <p>Playback: {isPlaying ? "Playing" : "Paused"}</p>
+          <p>Position: {position} seconds</p>
+          <p>Queue size: {queue.length}</p>
+        </div>
+      </header>
+
+      <div className="app-layout">
+        <aside className="operator-area">
+          <SongBrowser />
+          <QueuePanel />
+        </aside>
+
+        <section className="performance-area">
+          <div className="karaoke-display-area">
+            <LyricDisplay />
+          </div>
+
+          <div className="player-control-area">
+            <AudioPlayer />
+
+            <div className="manual-controls">
+              <button onClick={handlePlay}>Play</button>
+              <button onClick={handlePause}>Pause</button>
+              <button onClick={handleSeekForward}>Seek +10s</button>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

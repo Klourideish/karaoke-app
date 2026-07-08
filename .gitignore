@@ -22,3 +22,6 @@ npm-debug.log*
 # Operating system files
 .DS_Store
 Thumbs.db
+# Local karaoke media
+music/*
+!music/.gitkeep

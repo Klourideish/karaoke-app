@@ -76,7 +76,7 @@ export function LyricDisplay() {
   }
 
   return (
-    <section>
+    <section className="lyric-display">
       <h2>Lyrics</h2>
 
       {error && <p>Lyrics error: {error}</p>}
