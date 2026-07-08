@@ -49,6 +49,39 @@ export function AudioPlayer() {
     }
   }, [isPlaying, position, currentSong?.id, setPlaybackPosition]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    if (!currentSong || !audio || !isPlaying) {
+      return;
+    }
+
+    let frameId: number | null = null;
+    let isCancelled = false;
+
+    const updatePlaybackClock = () => {
+      if (isCancelled) {
+        return;
+      }
+
+      setPlaybackPosition(audio.currentTime);
+
+      if (!audio.ended && !audio.paused) {
+        frameId = requestAnimationFrame(updatePlaybackClock);
+      }
+    };
+
+    frameId = requestAnimationFrame(updatePlaybackClock);
+
+    return () => {
+      isCancelled = true;
+
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [currentSong?.id, isPlaying, setPlaybackPosition]);
+
   if (!currentSong) {
     return (
       <section>
