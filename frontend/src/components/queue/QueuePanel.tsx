@@ -5,7 +5,7 @@ export function QueuePanel() {
   const queue = useSessionStore((state) => state.queue);
 
   return (
-    <section>
+    <section className="queue-panel">
       <h2>Queue</h2>
 
       {queue.length === 0 && <p>No songs queued.</p>}

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { socket } from "./lib/socket";
 import { useSessionStore } from "./stores/sessionStore";
 import type { SessionState } from "./types/session";
@@ -15,6 +15,7 @@ const currentClientId = getClientId();
 const currentClientName = getClientName();
 
 function App() {
+  const [isLibraryOpen, setIsLibraryOpen] = useState(true);
   const socketConnected = useSessionStore((state) => state.socketConnected);
   const currentSong = useSessionStore((state) => state.currentSong);
   const isPlaying = useSessionStore((state) => state.isPlaying);
@@ -84,31 +85,48 @@ function App() {
   };
 
   return (
-    <main className="app-shell">
-      <header className="app-status">
-        <div>
-          <h1>Karaoke System</h1>
-          <p>Backend: {socketConnected ? "Connected" : "Disconnected"}</p>
-        </div>
+    <div className="app-frame">
+      <aside
+        className={[
+          "library-sidebar",
+          isLibraryOpen ? "library-sidebar-open" : "library-sidebar-closed",
+        ].join(" ")}
+      >
+        <button
+          className="library-sidebar-toggle"
+          onClick={() => {
+            setIsLibraryOpen((value) => !value);
+          }}
+        >
+          ☰ Library
+        </button>
 
-        <div className="status-details">
-          <p>
-            Current song:{" "}
-            {currentSong
-              ? `${currentSong.artist} - ${currentSong.title}`
-              : "No song selected"}
-          </p>
-          <p>Playback: {isPlaying ? "Playing" : "Paused"}</p>
-          <p>Position: {position} seconds</p>
-          <p>Queue size: {queue.length}</p>
-        </div>
-      </header>
+        {isLibraryOpen && (
+          <div className="library-sidebar-content">
+            <SongBrowser />
+          </div>
+        )}
+      </aside>
 
-      <div className="app-layout">
-        <aside className="operator-area">
-          <SongBrowser />
-          <QueuePanel />
-        </aside>
+      <main className="app-shell">
+        <header className="app-status">
+          <div>
+            <h1>Karaoke System</h1>
+            <p>Backend: {socketConnected ? "Connected" : "Disconnected"}</p>
+          </div>
+
+          <div className="status-details">
+            <p>
+              Current song:{" "}
+              {currentSong
+                ? `${currentSong.artist} - ${currentSong.title}`
+                : "No song selected"}
+            </p>
+            <p>Playback: {isPlaying ? "Playing" : "Paused"}</p>
+            <p>Position: {position} seconds</p>
+            <p>Queue size: {queue.length}</p>
+          </div>
+        </header>
 
         <section className="performance-area">
           <section className="singer-slots-area">
@@ -151,7 +169,10 @@ function App() {
             </ul>
           </section>
 
-          <SongContextPanel />
+          <div className="context-and-queue-area">
+            <SongContextPanel />
+            <QueuePanel />
+          </div>
 
           <PerformanceStage />
 
@@ -165,8 +186,8 @@ function App() {
             </div>
           </div>
         </section>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
