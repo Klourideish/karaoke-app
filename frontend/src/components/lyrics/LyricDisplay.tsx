@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { parseTtml, type LyricLine } from "../../lyrics/parseTtml";
+import { getLyricDisplayState } from "../../lyrics/getLyricDisplayState";
 import { usePlaybackClockStore } from "../../stores/playbackClockStore";
 
 export function LyricDisplay() {
@@ -63,27 +64,10 @@ export function LyricDisplay() {
     };
   }, [currentSong?.id]);
 
-  const lyricState = useMemo(() => {
-    const currentIndex = lines.findIndex(
-      (line) => position >= line.start && position < line.end,
-    );
-
-    if (currentIndex === -1) {
-      const nextLine = lines.find(
-        (line) => line.start > position,
-      );
-
-      return {
-        currentLine: null,
-        nextLine: nextLine ?? null,
-      };
-    }
-
-    return {
-      currentLine: lines[currentIndex] ?? null,
-      nextLine: lines[currentIndex + 1] ?? null,
-    };
-  }, [lines, position]);
+  const lyricState = useMemo(
+    () => getLyricDisplayState(lines, position),
+    [lines, position],
+  );
 
   const { currentLine, nextLine } = lyricState;
 
