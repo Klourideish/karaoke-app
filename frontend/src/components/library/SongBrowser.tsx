@@ -18,6 +18,9 @@ export function SongBrowser() {
   const rescanLibrary = useLibraryStore(
     (state) => state.rescanLibrary,
   );
+  const changeLibraryPath = useLibraryStore(
+    (state) => state.changeLibraryPath,
+  );
 
   useEffect(() => {
     void fetchLibrarySource();
@@ -40,6 +43,24 @@ export function SongBrowser() {
         }}
       >
         {isRescanning ? "Rescanning..." : "Rescan library"}
+      </button>
+
+      <button
+        disabled={isLoading || isRescanning}
+        onClick={() => {
+          const nextPath = window.prompt(
+            "Enter library path",
+            libraryPath ?? "",
+          );
+
+          if (!nextPath) {
+            return;
+          }
+
+          void changeLibraryPath(nextPath);
+        }}
+      >
+        Change library path
       </button>
 
       {isLoading && <p>Loading library...</p>}

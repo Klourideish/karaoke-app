@@ -39,7 +39,16 @@ const io = new Server(server, {
   },
 });
 
+let runtimeLibraryPath: string | null = null;
+
 function getLibrarySource() {
+  if (runtimeLibraryPath) {
+    return {
+      path: runtimeLibraryPath,
+      source: "runtime" as const,
+    };
+  }
+
   if (process.env.MUSIC_DIR) {
     return {
       path: path.resolve(process.env.MUSIC_DIR),
@@ -159,6 +168,38 @@ app.get("/library/source", (_req, res) => {
   });
 });
 
+app.post("/library/source", async (req, res) => {
+  const requestedPath =
+    typeof req.body?.path === "string" ? req.body.path : "";
+
+  if (!requestedPath.trim()) {
+    res.status(400).json({
+      error: "Library path is required",
+    });
+    return;
+  }
+
+  const resolvedPath = path.resolve(requestedPath);
+
+  try {
+    const songs = await scanLibrary(resolvedPath);
+    runtimeLibraryPath = resolvedPath;
+
+    res.json({
+      path: resolvedPath,
+      source: "runtime",
+      songs,
+      count: songs.length,
+    });
+  } catch (error) {
+    console.error("Failed to set library source:", error);
+
+    res.status(400).json({
+      error: "Failed to scan requested library path",
+    });
+  }
+});
+
 app.get("/library", async (_req, res) => {
   const librarySource = getLibrarySource();
   console.log("Scanning library path:", librarySource.path);
@@ -184,6 +225,7 @@ app.post("/library/rescan", async (_req, res) => {
 
     res.json({
       path: library.path,
+      source: library.source,
       songs: library.songs,
       count: library.songs.length,
     });
