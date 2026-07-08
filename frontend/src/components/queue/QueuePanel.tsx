@@ -14,6 +14,11 @@ export function QueuePanel() {
   {queue.map((item) => (
     <li key={item.song.id}>
       {item.song.artist} - {item.song.title} ({item.votes} votes)
+      {item.requestedByName && (
+        <>
+          {" "}Requested by {item.requestedByName}
+        </>
+      )}
     
       <button
         onClick={() => socket.emit("vote", item.song.id)}

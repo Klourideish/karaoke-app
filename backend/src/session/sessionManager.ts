@@ -2,12 +2,16 @@ import type { Song } from "shared";
 
 interface InternalQueueItem {
   song: Song;
+  requestedByClientId: string | null;
+  requestedByName: string | null;
   requestedOrder: number;
   voterIds: Set<string>;
 }
 
 export interface QueueItem {
   song: Song;
+  requestedByClientId: string | null;
+  requestedByName: string | null;
   votes: number;
 }
 
@@ -53,6 +57,8 @@ function getPublicQueue(): QueueItem[] {
     })
     .map((item) => ({
       song: item.song,
+      requestedByClientId: item.requestedByClientId,
+      requestedByName: item.requestedByName,
       votes: item.voterIds.size,
     }));
 }
@@ -70,6 +76,12 @@ function createDefaultSingerSlots(): SingerSlot[] {
       clientId: null,
     },
   ];
+}
+
+function getDefaultSingerSlotName(slotId: string): string | null {
+  return createDefaultSingerSlots().find(
+    (slot) => slot.id === slotId,
+  )?.name ?? null;
 }
 
 export function getSession(): SessionState {
@@ -132,6 +144,7 @@ export function updateSingerSlotName(
 export function assignSingerSlotClient(
   slotId: string,
   clientId: string | null,
+  clientName?: string,
 ): boolean {
   const slot = session.singerSlots.find(
     (item) => item.id === slotId,
@@ -142,6 +155,17 @@ export function assignSingerSlotClient(
   }
 
   slot.clientId = clientId;
+
+  if (clientId === null) {
+    slot.name = getDefaultSingerSlotName(slotId) ?? slot.name;
+    return true;
+  }
+
+  const trimmedName = clientName?.trim();
+
+  if (trimmedName) {
+    slot.name = trimmedName;
+  }
 
   return true;
 }
@@ -164,7 +188,11 @@ export function finishPlayback(): void {
   selectNextQueuedSong();
 }
 
-export function addToQueue(song: Song): boolean {
+export function addToQueue(
+  song: Song,
+  requestedByClientId: string | null = null,
+  requestedByName: string | null = null,
+): boolean {
   const alreadyQueued = internalQueue.some(
     (item) => item.song.id === song.id,
   );
@@ -175,6 +203,8 @@ export function addToQueue(song: Song): boolean {
 
   internalQueue.push({
     song,
+    requestedByClientId,
+    requestedByName,
     requestedOrder: nextRequestedOrder,
     voterIds: new Set(),
   });

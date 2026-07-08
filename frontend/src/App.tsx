@@ -7,10 +7,11 @@ import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
 import { LyricDisplay } from "./components/lyrics/LyricDisplay";
-import { getClientId } from "./lib/clientIdentity";
+import { getClientId, getClientName } from "./lib/clientIdentity";
 import "./App.css";
 
 const currentClientId = getClientId();
+const currentClientName = getClientName();
 
 function App() {
   const socketConnected = useSessionStore((state) => state.socketConnected);
@@ -70,29 +71,11 @@ function App() {
     socket.emit("seek", position + 10);
   };
 
-  const handleRenameSingerSlot = (
-    slotId: string,
-    currentName: string,
-  ) => {
-    const nextName = window.prompt(
-      "Enter singer name",
-      currentName,
-    );
-
-    const trimmedName = nextName?.trim();
-
-    if (!trimmedName) {
-      return;
-    }
-
-    socket.emit("update-singer-slot-name", {
-      slotId,
-      name: trimmedName,
-    });
-  };
-
   const handleClaimSingerSlot = (slotId: string) => {
-    socket.emit("assign-singer-slot", slotId);
+    socket.emit("assign-singer-slot", {
+      slotId,
+      clientName: currentClientName,
+    });
   };
 
   const handleReleaseSingerSlot = (slotId: string) => {
@@ -143,13 +126,6 @@ function App() {
                       {isAssigned ? "Assigned" : "Unassigned"}
                       {isOwnedByCurrentClient && " (you)"}
                     </span>
-                    <button
-                      onClick={() => {
-                        handleRenameSingerSlot(slot.id, slot.name);
-                      }}
-                    >
-                      Rename
-                    </button>
                     {!isAssigned && (
                       <button
                         onClick={() => {

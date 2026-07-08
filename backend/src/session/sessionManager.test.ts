@@ -126,25 +126,28 @@ describe("sessionManager", () => {
     ]);
   });
 
-  it("assigning a known singer slot stores clientId", () => {
+  it("assigning a known singer slot stores clientId and name", () => {
     const assigned = assignSingerSlotClient(
       "singer-1",
       "client-1",
+      "Alice",
     );
 
     expect(assigned).toBe(true);
     expect(getSession().singerSlots[0]?.clientId).toBe(
       "client-1",
     );
+    expect(getSession().singerSlots[0]?.name).toBe("Alice");
   });
 
-  it("unassigning a known singer slot clears clientId", () => {
-    assignSingerSlotClient("singer-1", "client-1");
+  it("unassigning a known singer slot clears clientId and resets name", () => {
+    assignSingerSlotClient("singer-1", "client-1", "Alice");
 
     const unassigned = assignSingerSlotClient("singer-1", null);
 
     expect(unassigned).toBe(true);
     expect(getSession().singerSlots[0]?.clientId).toBeNull();
+    expect(getSession().singerSlots[0]?.name).toBe("Singer 1");
   });
 
   it("unknown singer slot assignment is rejected", () => {
@@ -192,7 +195,29 @@ describe("sessionManager", () => {
 
     expect(getSession().queue[0]).toEqual({
       song: testSong,
+      requestedByClientId: null,
+      requestedByName: null,
       votes: 0,
+    });
+  });
+
+  it("adds a queue item with no requester", () => {
+    expect(addToQueue(testSong)).toBe(true);
+
+    expect(getSession().queue[0]).toMatchObject({
+      song: testSong,
+      requestedByClientId: null,
+      requestedByName: null,
+    });
+  });
+
+  it("adds a queue item with requester metadata", () => {
+    expect(addToQueue(testSong, "client-1", "Alice")).toBe(true);
+
+    expect(getSession().queue[0]).toMatchObject({
+      song: testSong,
+      requestedByClientId: "client-1",
+      requestedByName: "Alice",
     });
   });
 
@@ -201,6 +226,16 @@ describe("sessionManager", () => {
     expect(addToQueue(testSong)).toBe(false);
 
     expect(getSession().queue).toHaveLength(1);
+  });
+
+  it("rejects duplicate queued songs even if requester differs", () => {
+    expect(addToQueue(testSong, "client-1", "Alice")).toBe(true);
+    expect(addToQueue(testSong, "client-2", "Bob")).toBe(false);
+
+    expect(getSession().queue).toHaveLength(1);
+    expect(getSession().queue[0]?.requestedByClientId).toBe(
+      "client-1",
+    );
   });
 
   it("allows a user to vote for a queued song", () => {

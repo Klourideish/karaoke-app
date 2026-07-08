@@ -2,6 +2,8 @@ import type { Song } from "shared";
 
 export interface QueueItem {
   song: Song;
+  requestedByClientId: string | null;
+  requestedByName: string | null;
   votes: number;
 }
 

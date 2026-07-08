@@ -124,13 +124,32 @@ io.on("connection", (socket) => {
     io.emit("sync-state", getSession());
   });
 
-  socket.on("add-to-queue", (song: Song) => {
-    const added = addToQueue(song);
+  socket.on(
+    "add-to-queue",
+    (
+      payload:
+        | Song
+        | {
+            song: Song;
+            requesterName?: string | null;
+          },
+    ) => {
+      const song =
+        "song" in payload ? payload.song : payload;
+      const requesterName =
+        "song" in payload ? payload.requesterName ?? null : null;
 
-    if (added) {
-      io.emit("sync-state", getSession());
-    }
-  });
+      const added = addToQueue(
+        song,
+        "song" in payload ? clientId : null,
+        requesterName,
+      );
+
+      if (added) {
+        io.emit("sync-state", getSession());
+      }
+    },
+  );
 
   socket.on("vote", (songId: string) => {
   const accepted = voteForSong(songId, clientId);
@@ -162,13 +181,24 @@ socket.on("select-song", (songId: string) => {
     },
   );
 
-  socket.on("assign-singer-slot", (slotId: string) => {
-    const assigned = assignSingerSlotClient(slotId, clientId);
+  socket.on(
+    "assign-singer-slot",
+    (payload: string | { slotId: string; clientName?: string }) => {
+      const slotId =
+        typeof payload === "string" ? payload : payload.slotId;
+      const clientName =
+        typeof payload === "string" ? undefined : payload.clientName;
+      const assigned = assignSingerSlotClient(
+        slotId,
+        clientId,
+        clientName,
+      );
 
-    if (assigned) {
-      io.emit("sync-state", getSession());
-    }
-  });
+      if (assigned) {
+        io.emit("sync-state", getSession());
+      }
+    },
+  );
 
   socket.on("unassign-singer-slot", (slotId: string) => {
     const slot = getSession().singerSlots.find(

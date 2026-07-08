@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLibraryStore } from "../../stores/libraryStore";
 import { socket } from "../../lib/socket";
+import { getClientName } from "../../lib/clientIdentity";
 
 export function SongBrowser() {
   const songs = useLibraryStore((state) => state.songs);
@@ -78,7 +79,14 @@ export function SongBrowser() {
           <li key={song.id}>
             {song.artist} - {song.title}
 
-            <button onClick={() => socket.emit("add-to-queue", song)}>
+            <button
+              onClick={() =>
+                socket.emit("add-to-queue", {
+                  song,
+                  requesterName: getClientName(),
+                })
+              }
+            >
               Request
             </button>
           </li>
