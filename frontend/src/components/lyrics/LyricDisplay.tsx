@@ -69,7 +69,7 @@ export function LyricDisplay() {
     [lines, position],
   );
 
-  const { currentLine, nextLine } = lyricState;
+  const { previousLine, currentLine, nextLine } = lyricState;
 
   if (!currentSong) {
     return null;
@@ -81,7 +81,7 @@ export function LyricDisplay() {
 
       {error && <p>Lyrics error: {error}</p>}
 
-      {!error && !currentLine && !nextLine && (
+      {!error && !previousLine && !currentLine && !nextLine && (
         <p>...</p>
       )}
 
@@ -113,6 +113,17 @@ export function LyricDisplay() {
               </span>
             );
           })}
+        </p>
+      )}
+
+      {!currentLine && previousLine && (
+        <p
+          style={{
+            fontSize: "2rem",
+            fontWeight: "bold",
+          }}
+        >
+          {previousLine.text}
         </p>
       )}
 
