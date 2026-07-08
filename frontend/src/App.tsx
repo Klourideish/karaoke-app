@@ -6,7 +6,7 @@ import { useLibraryStore } from "./stores/libraryStore";
 import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
-import { LyricDisplay } from "./components/lyrics/LyricDisplay";
+import { PerformanceStage } from "./components/performance/PerformanceStage";
 import { getClientId, getClientName } from "./lib/clientIdentity";
 import "./App.css";
 
@@ -150,9 +150,7 @@ function App() {
             </ul>
           </section>
 
-          <div className="karaoke-display-area">
-            <LyricDisplay />
-          </div>
+          <PerformanceStage />
 
           <div className="player-control-area">
             <AudioPlayer />
