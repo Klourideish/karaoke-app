@@ -56,6 +56,13 @@
   padding-left: 0;
 }
 
+.singer-slots-area li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .karaoke-display-area {
   display: flex;
   align-items: center;

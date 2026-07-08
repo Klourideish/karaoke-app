@@ -7,7 +7,10 @@ import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
 import { LyricDisplay } from "./components/lyrics/LyricDisplay";
+import { getClientId } from "./lib/clientIdentity";
 import "./App.css";
+
+const currentClientId = getClientId();
 
 function App() {
   const socketConnected = useSessionStore((state) => state.socketConnected);
@@ -88,6 +91,14 @@ function App() {
     });
   };
 
+  const handleClaimSingerSlot = (slotId: string) => {
+    socket.emit("assign-singer-slot", slotId);
+  };
+
+  const handleReleaseSingerSlot = (slotId: string) => {
+    socket.emit("unassign-singer-slot", slotId);
+  };
+
   return (
     <main className="app-shell">
       <header className="app-status">
@@ -120,19 +131,46 @@ function App() {
             <h2>Singers</h2>
 
             <ul>
-              {singerSlots.map((slot) => (
-                <li key={slot.id}>
-                  {slot.name}
-                  {slot.clientId && ` (${slot.clientId})`}
-                  <button
-                    onClick={() => {
-                      handleRenameSingerSlot(slot.id, slot.name);
-                    }}
-                  >
-                    Rename
-                  </button>
-                </li>
-              ))}
+              {singerSlots.map((slot) => {
+                const isAssigned = slot.clientId !== null;
+                const isOwnedByCurrentClient =
+                  slot.clientId === currentClientId;
+
+                return (
+                  <li key={slot.id}>
+                    <span>
+                      {slot.name} -{" "}
+                      {isAssigned ? "Assigned" : "Unassigned"}
+                      {isOwnedByCurrentClient && " (you)"}
+                    </span>
+                    <button
+                      onClick={() => {
+                        handleRenameSingerSlot(slot.id, slot.name);
+                      }}
+                    >
+                      Rename
+                    </button>
+                    {!isAssigned && (
+                      <button
+                        onClick={() => {
+                          handleClaimSingerSlot(slot.id);
+                        }}
+                      >
+                        Claim
+                      </button>
+                    )}
+                    {isOwnedByCurrentClient && (
+                      <button
+                        onClick={() => {
+                          handleReleaseSingerSlot(slot.id);
+                        }}
+                      >
+                        Release
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </section>
 

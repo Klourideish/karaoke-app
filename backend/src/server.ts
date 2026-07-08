@@ -171,6 +171,14 @@ socket.on("select-song", (songId: string) => {
   });
 
   socket.on("unassign-singer-slot", (slotId: string) => {
+    const slot = getSession().singerSlots.find(
+      (item) => item.id === slotId,
+    );
+
+    if (slot?.clientId !== clientId) {
+      return;
+    }
+
     const unassigned = assignSingerSlotClient(slotId, null);
 
     if (unassigned) {

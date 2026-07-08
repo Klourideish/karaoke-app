@@ -3,6 +3,7 @@ import type { Song } from "shared";
 
 import {
   addToQueue,
+  assignSingerSlotClient,
   clearAutoStartPending,
   getSession,
   markPlaybackReady,
@@ -111,6 +112,48 @@ describe("sessionManager", () => {
     );
 
     expect(updated).toBe(false);
+    expect(getSession().singerSlots).toEqual([
+      {
+        id: "singer-1",
+        name: "Singer 1",
+        clientId: null,
+      },
+      {
+        id: "singer-2",
+        name: "Singer 2",
+        clientId: null,
+      },
+    ]);
+  });
+
+  it("assigning a known singer slot stores clientId", () => {
+    const assigned = assignSingerSlotClient(
+      "singer-1",
+      "client-1",
+    );
+
+    expect(assigned).toBe(true);
+    expect(getSession().singerSlots[0]?.clientId).toBe(
+      "client-1",
+    );
+  });
+
+  it("unassigning a known singer slot clears clientId", () => {
+    assignSingerSlotClient("singer-1", "client-1");
+
+    const unassigned = assignSingerSlotClient("singer-1", null);
+
+    expect(unassigned).toBe(true);
+    expect(getSession().singerSlots[0]?.clientId).toBeNull();
+  });
+
+  it("unknown singer slot assignment is rejected", () => {
+    const assigned = assignSingerSlotClient(
+      "missing-singer",
+      "client-1",
+    );
+
+    expect(assigned).toBe(false);
     expect(getSession().singerSlots).toEqual([
       {
         id: "singer-1",
