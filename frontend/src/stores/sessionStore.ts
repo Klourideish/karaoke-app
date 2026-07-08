@@ -9,6 +9,8 @@ interface SessionStore extends SessionState {
 
 export const useSessionStore = create<SessionStore>((set) => ({
   currentSong: null,
+  currentSongRequestedByClientId: null,
+  currentSongRequestedByName: null,
   isPlaying: false,
   position: 0,
   queue: [],
@@ -33,6 +35,10 @@ export const useSessionStore = create<SessionStore>((set) => ({
   setSession: (session) => {
     set({
       currentSong: session.currentSong,
+      currentSongRequestedByClientId:
+        session.currentSongRequestedByClientId,
+      currentSongRequestedByName:
+        session.currentSongRequestedByName,
       isPlaying: session.isPlaying,
       position: session.position,
       queue: session.queue,

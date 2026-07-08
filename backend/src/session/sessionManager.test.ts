@@ -36,6 +36,8 @@ describe("sessionManager", () => {
   it("starts paused at position zero with an empty queue", () => {
     expect(getSession()).toMatchObject({
       currentSong: null,
+      currentSongRequestedByClientId: null,
+      currentSongRequestedByName: null,
       autoStartPending: false,
       isPlaying: false,
       playbackReady: false,
@@ -360,6 +362,19 @@ describe("sessionManager", () => {
     expect(getSession().queue).toEqual([]);
   });
 
+  it("queued manual select copies requester metadata to current song", () => {
+    addToQueue(testSong, "client-1", "Alice");
+
+    selectSong(testSong.id);
+
+    expect(getSession()).toMatchObject({
+      currentSong: testSong,
+      currentSongRequestedByClientId: "client-1",
+      currentSongRequestedByName: "Alice",
+      autoStartPending: false,
+    });
+  });
+
   it("rejects selection of a song that is not queued", () => {
     const selected = selectSong("missing-song");
 
@@ -471,6 +486,32 @@ describe("sessionManager", () => {
       isPlaying: false,
       playbackReady: false,
       position: 0,
+    });
+  });
+
+  it("automatic next queued song copies requester metadata", () => {
+    addToQueue(testSong, "client-1", "Alice");
+
+    selectNextQueuedSong();
+
+    expect(getSession()).toMatchObject({
+      currentSong: testSong,
+      currentSongRequestedByClientId: "client-1",
+      currentSongRequestedByName: "Alice",
+      autoStartPending: true,
+    });
+  });
+
+  it("reset clears requester metadata", () => {
+    addToQueue(testSong, "client-1", "Alice");
+    selectSong(testSong.id);
+
+    resetSessionForTests();
+
+    expect(getSession()).toMatchObject({
+      currentSong: null,
+      currentSongRequestedByClientId: null,
+      currentSongRequestedByName: null,
     });
   });
 

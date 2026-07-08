@@ -15,6 +15,8 @@ export interface SingerSlot {
 
 export interface SessionState {
   currentSong: Song | null;
+  currentSongRequestedByClientId: string | null;
+  currentSongRequestedByName: string | null;
   isPlaying: boolean;
   position: number;
   queue: QueueItem[];

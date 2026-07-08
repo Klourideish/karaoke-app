@@ -7,6 +7,9 @@ const currentClientId = getClientId();
 
 export function PerformanceStage() {
   const singerSlots = useSessionStore((state) => state.singerSlots);
+  const currentSongRequestedByName = useSessionStore(
+    (state) => state.currentSongRequestedByName,
+  );
 
   const singerOne = singerSlots.find(
     (slot) => slot.id === "singer-1",
@@ -24,6 +27,11 @@ export function PerformanceStage() {
       />
 
       <div className="performance-lyrics">
+        {currentSongRequestedByName && (
+          <p className="performance-requester">
+            Requested by {currentSongRequestedByName}
+          </p>
+        )}
         <LyricDisplay />
       </div>
 

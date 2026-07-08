@@ -23,6 +23,8 @@ export interface SingerSlot {
 
 export interface SessionState {
   currentSong: Song | null;
+  currentSongRequestedByClientId: string | null;
+  currentSongRequestedByName: string | null;
   autoStartPending: boolean;
   isPlaying: boolean;
   playbackReady: boolean;
@@ -35,6 +37,8 @@ const internalQueue: InternalQueueItem[] = [];
 
 const session = {
   currentSong: null as Song | null,
+  currentSongRequestedByClientId: null as string | null,
+  currentSongRequestedByName: null as string | null,
   autoStartPending: false,
   isPlaying: false,
   playbackReady: false,
@@ -87,6 +91,10 @@ function getDefaultSingerSlotName(slotId: string): string | null {
 export function getSession(): SessionState {
   return {
     currentSong: session.currentSong,
+    currentSongRequestedByClientId:
+      session.currentSongRequestedByClientId,
+    currentSongRequestedByName:
+      session.currentSongRequestedByName,
     autoStartPending: session.autoStartPending,
     isPlaying: session.isPlaying,
     playbackReady: session.playbackReady,
@@ -269,6 +277,9 @@ function selectQueuedSong(
   }
 
   session.currentSong = selectedItem.song;
+  session.currentSongRequestedByClientId =
+    selectedItem.requestedByClientId;
+  session.currentSongRequestedByName = selectedItem.requestedByName;
   session.autoStartPending = autoStartPending;
   session.position = 0;
   session.isPlaying = false;
@@ -279,6 +290,8 @@ function selectQueuedSong(
 
 export function resetSessionForTests(): void {
   session.currentSong = null;
+  session.currentSongRequestedByClientId = null;
+  session.currentSongRequestedByName = null;
   session.autoStartPending = false;
   session.isPlaying = false;
   session.playbackReady = false;
