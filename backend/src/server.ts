@@ -16,7 +16,9 @@ import {
   pause,
   play,
   seek,
+  assignSingerSlotClient,
   selectSong,
+  updateSingerSlotName,
   voteForSong,
 } from "./session/sessionManager";
 
@@ -145,6 +147,36 @@ socket.on("select-song", (songId: string) => {
     io.emit("sync-state", getSession());
   }
 });
+
+  socket.on(
+    "update-singer-slot-name",
+    (payload: { slotId: string; name: string }) => {
+      const updated = updateSingerSlotName(
+        payload.slotId,
+        payload.name,
+      );
+
+      if (updated) {
+        io.emit("sync-state", getSession());
+      }
+    },
+  );
+
+  socket.on("assign-singer-slot", (slotId: string) => {
+    const assigned = assignSingerSlotClient(slotId, clientId);
+
+    if (assigned) {
+      io.emit("sync-state", getSession());
+    }
+  });
+
+  socket.on("unassign-singer-slot", (slotId: string) => {
+    const unassigned = assignSingerSlotClient(slotId, null);
+
+    if (unassigned) {
+      io.emit("sync-state", getSession());
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);

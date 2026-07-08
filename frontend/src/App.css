@@ -38,9 +38,22 @@
 
 .performance-area {
   display: grid;
-  grid-template-rows: minmax(360px, 1fr) auto;
+  grid-template-rows: auto minmax(360px, 1fr) auto;
   gap: 24px;
   min-height: calc(100svh - 160px);
+}
+
+.singer-slots-area {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+}
+
+.singer-slots-area ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  list-style: none;
+  padding-left: 0;
 }
 
 .karaoke-display-area {

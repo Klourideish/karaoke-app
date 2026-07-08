@@ -14,6 +14,7 @@ import {
   selectSong,
   advancePosition,
   finishPlayback,
+  updateSingerSlotName,
   voteForSong,
 } from "./sessionManager";
 
@@ -39,7 +40,89 @@ describe("sessionManager", () => {
       playbackReady: false,
       position: 0,
       queue: [],
+      singerSlots: [
+        {
+          id: "singer-1",
+          name: "Singer 1",
+          clientId: null,
+        },
+        {
+          id: "singer-2",
+          name: "Singer 2",
+          clientId: null,
+        },
+      ],
     });
+  });
+
+  it("starts with default singer slots", () => {
+    expect(getSession().singerSlots).toEqual([
+      {
+        id: "singer-1",
+        name: "Singer 1",
+        clientId: null,
+      },
+      {
+        id: "singer-2",
+        name: "Singer 2",
+        clientId: null,
+      },
+    ]);
+  });
+
+  it("updates a singer slot name", () => {
+    const updated = updateSingerSlotName(
+      "singer-1",
+      "Lead Singer",
+    );
+
+    expect(updated).toBe(true);
+    expect(getSession().singerSlots[0]?.name).toBe(
+      "Lead Singer",
+    );
+  });
+
+  it("trims singer slot names", () => {
+    const updated = updateSingerSlotName(
+      "singer-1",
+      "  Lead Singer  ",
+    );
+
+    expect(updated).toBe(true);
+    expect(getSession().singerSlots[0]?.name).toBe(
+      "Lead Singer",
+    );
+  });
+
+  it("rejects blank singer slot names", () => {
+    const updated = updateSingerSlotName(
+      "singer-1",
+      "   ",
+    );
+
+    expect(updated).toBe(false);
+    expect(getSession().singerSlots[0]?.name).toBe("Singer 1");
+  });
+
+  it("rejects unknown singer slot IDs", () => {
+    const updated = updateSingerSlotName(
+      "missing-singer",
+      "Nope",
+    );
+
+    expect(updated).toBe(false);
+    expect(getSession().singerSlots).toEqual([
+      {
+        id: "singer-1",
+        name: "Singer 1",
+        clientId: null,
+      },
+      {
+        id: "singer-2",
+        name: "Singer 2",
+        clientId: null,
+      },
+    ]);
   });
 
   it("can play and pause", () => {

@@ -12,6 +12,18 @@ export const useSessionStore = create<SessionStore>((set) => ({
   isPlaying: false,
   position: 0,
   queue: [],
+  singerSlots: [
+    {
+      id: "singer-1",
+      name: "Singer 1",
+      clientId: null,
+    },
+    {
+      id: "singer-2",
+      name: "Singer 2",
+      clientId: null,
+    },
+  ],
   socketConnected: false,
 
   setSocketConnected: (connected) => {
@@ -24,6 +36,7 @@ export const useSessionStore = create<SessionStore>((set) => ({
       isPlaying: session.isPlaying,
       position: session.position,
       queue: session.queue,
+      singerSlots: session.singerSlots,
     });
   },
 }));

@@ -11,6 +11,12 @@ export interface QueueItem {
   votes: number;
 }
 
+export interface SingerSlot {
+  id: string;
+  name: string;
+  clientId: string | null;
+}
+
 export interface SessionState {
   currentSong: Song | null;
   autoStartPending: boolean;
@@ -18,6 +24,7 @@ export interface SessionState {
   playbackReady: boolean;
   position: number;
   queue: QueueItem[];
+  singerSlots: SingerSlot[];
 }
 
 const internalQueue: InternalQueueItem[] = [];
@@ -28,6 +35,7 @@ const session = {
   isPlaying: false,
   playbackReady: false,
   position: 0,
+  singerSlots: createDefaultSingerSlots(),
 };
 
 let nextRequestedOrder = 0;
@@ -49,6 +57,21 @@ function getPublicQueue(): QueueItem[] {
     }));
 }
 
+function createDefaultSingerSlots(): SingerSlot[] {
+  return [
+    {
+      id: "singer-1",
+      name: "Singer 1",
+      clientId: null,
+    },
+    {
+      id: "singer-2",
+      name: "Singer 2",
+      clientId: null,
+    },
+  ];
+}
+
 export function getSession(): SessionState {
   return {
     currentSong: session.currentSong,
@@ -57,6 +80,9 @@ export function getSession(): SessionState {
     playbackReady: session.playbackReady,
     position: session.position,
     queue: getPublicQueue(),
+    singerSlots: session.singerSlots.map((slot) => ({
+      ...slot,
+    })),
   };
 }
 
@@ -78,6 +104,46 @@ export function markPlaybackReady(): void {
 
 export function clearAutoStartPending(): void {
   session.autoStartPending = false;
+}
+
+export function updateSingerSlotName(
+  slotId: string,
+  name: string,
+): boolean {
+  const slot = session.singerSlots.find(
+    (item) => item.id === slotId,
+  );
+
+  if (!slot) {
+    return false;
+  }
+
+  const trimmedName = name.trim();
+
+  if (!trimmedName) {
+    return false;
+  }
+
+  slot.name = trimmedName;
+
+  return true;
+}
+
+export function assignSingerSlotClient(
+  slotId: string,
+  clientId: string | null,
+): boolean {
+  const slot = session.singerSlots.find(
+    (item) => item.id === slotId,
+  );
+
+  if (!slot) {
+    return false;
+  }
+
+  slot.clientId = clientId;
+
+  return true;
 }
 
 export function selectNextQueuedSong(): boolean {
@@ -187,6 +253,7 @@ export function resetSessionForTests(): void {
   session.isPlaying = false;
   session.playbackReady = false;
   session.position = 0;
+  session.singerSlots = createDefaultSingerSlots();
 
   internalQueue.length = 0;
   nextRequestedOrder = 0;

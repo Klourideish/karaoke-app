@@ -15,6 +15,7 @@ function App() {
   const isPlaying = useSessionStore((state) => state.isPlaying);
   const position = useSessionStore((state) => state.position);
   const queue = useSessionStore((state) => state.queue);
+  const singerSlots = useSessionStore((state) => state.singerSlots);
 
   const setSocketConnected = useSessionStore(
     (state) => state.setSocketConnected,
@@ -66,6 +67,27 @@ function App() {
     socket.emit("seek", position + 10);
   };
 
+  const handleRenameSingerSlot = (
+    slotId: string,
+    currentName: string,
+  ) => {
+    const nextName = window.prompt(
+      "Enter singer name",
+      currentName,
+    );
+
+    const trimmedName = nextName?.trim();
+
+    if (!trimmedName) {
+      return;
+    }
+
+    socket.emit("update-singer-slot-name", {
+      slotId,
+      name: trimmedName,
+    });
+  };
+
   return (
     <main className="app-shell">
       <header className="app-status">
@@ -94,6 +116,26 @@ function App() {
         </aside>
 
         <section className="performance-area">
+          <section className="singer-slots-area">
+            <h2>Singers</h2>
+
+            <ul>
+              {singerSlots.map((slot) => (
+                <li key={slot.id}>
+                  {slot.name}
+                  {slot.clientId && ` (${slot.clientId})`}
+                  <button
+                    onClick={() => {
+                      handleRenameSingerSlot(slot.id, slot.name);
+                    }}
+                  >
+                    Rename
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+
           <div className="karaoke-display-area">
             <LyricDisplay />
           </div>
