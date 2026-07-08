@@ -39,6 +39,30 @@ const io = new Server(server, {
   },
 });
 
+function getLibrarySource() {
+  if (process.env.MUSIC_DIR) {
+    return {
+      path: path.resolve(process.env.MUSIC_DIR),
+      source: "MUSIC_DIR" as const,
+    };
+  }
+
+  return {
+    path: path.resolve(process.cwd(), "../music"),
+    source: "fallback" as const,
+  };
+}
+
+async function scanActiveLibrary() {
+  const librarySource = getLibrarySource();
+  const songs = await scanLibrary(librarySource.path);
+
+  return {
+    ...librarySource,
+    songs,
+  };
+}
+
 // ----- SOCKET LOGIC -----
 io.on("connection", (socket) => {
   const clientId =
@@ -126,19 +150,57 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.get("/library", async (_req, res) => {
-  const libraryPath = process.env.MUSIC_DIR
-  ? path.resolve(process.env.MUSIC_DIR)
-  : path.resolve(process.cwd(), "../music");
-  console.log("Scanning library path:", libraryPath);
+app.get("/library/source", (_req, res) => {
+  const librarySource = getLibrarySource();
 
-  app.get("/media/audio/:songId", async (req, res) => {
-  const libraryPath = process.env.MUSIC_DIR
-    ? path.resolve(process.env.MUSIC_DIR)
-    : path.resolve(process.cwd(), "../music");
+  res.json({
+    path: librarySource.path,
+    source: librarySource.source,
+  });
+});
+
+app.get("/library", async (_req, res) => {
+  const librarySource = getLibrarySource();
+  console.log("Scanning library path:", librarySource.path);
 
   try {
-    const songs = await scanLibrary(libraryPath);
+    const songs = await scanLibrary(librarySource.path);
+
+    res.json({
+      songs,
+    });
+  } catch (error) {
+    console.error("Failed to scan library:", error);
+
+    res.status(500).json({
+      error: "Failed to scan library",
+    });
+  }
+});
+
+app.post("/library/rescan", async (_req, res) => {
+  try {
+    const library = await scanActiveLibrary();
+
+    res.json({
+      path: library.path,
+      songs: library.songs,
+      count: library.songs.length,
+    });
+  } catch (error) {
+    console.error("Failed to rescan library:", error);
+
+    res.status(500).json({
+      error: "Failed to rescan library",
+    });
+  }
+});
+
+app.get("/media/audio/:songId", async (req, res) => {
+  const librarySource = getLibrarySource();
+
+  try {
+    const songs = await scanLibrary(librarySource.path);
 
     const song = songs.find(
       (item) => item.id === req.params.songId,
@@ -162,12 +224,10 @@ app.get("/library", async (_req, res) => {
 });
 
 app.get("/media/lyrics/:songId", async (req, res) => {
-  const libraryPath = process.env.MUSIC_DIR
-    ? path.resolve(process.env.MUSIC_DIR)
-    : path.resolve(process.cwd(), "../music");
+  const librarySource = getLibrarySource();
 
   try {
-    const songs = await scanLibrary(libraryPath);
+    const songs = await scanLibrary(librarySource.path);
 
     const song = songs.find(
       (item) => item.id === req.params.songId,
@@ -187,21 +247,6 @@ app.get("/media/lyrics/:songId", async (req, res) => {
 
     res.status(500).json({
       error: "Failed to serve lyrics",
-    });
-  }
-});
-
-  try {
-    const songs = await scanLibrary(libraryPath);
-
-    res.json({
-      songs,
-    });
-  } catch (error) {
-    console.error("Failed to scan library:", error);
-
-    res.status(500).json({
-      error: "Failed to scan library",
     });
   }
 });
