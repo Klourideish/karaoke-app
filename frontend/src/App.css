@@ -230,6 +230,21 @@
   width: 100%;
 }
 
+.microphone-setup {
+  display: grid;
+  gap: 10px;
+}
+
+.microphone-setup label {
+  display: grid;
+  gap: 4px;
+}
+
+.microphone-setup select {
+  width: 100%;
+  min-width: 0;
+}
+
 .manual-controls {
   display: flex;
   flex-wrap: wrap;

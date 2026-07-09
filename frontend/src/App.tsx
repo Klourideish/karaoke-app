@@ -7,6 +7,7 @@ import { useLibraryStore } from "./stores/libraryStore";
 import { SongBrowser } from "./components/library/SongBrowser";
 import { QueuePanel } from "./components/queue/QueuePanel";
 import { AudioPlayer } from "./components/player/AudioPlayer";
+import { MicrophoneSetup } from "./components/microphone/MicrophoneSetup";
 import { PerformanceStage } from "./components/performance/PerformanceStage";
 import { SongContextPanel } from "./components/performance/SongContextPanel";
 import { getClientId, getClientName } from "./lib/clientIdentity";
@@ -14,7 +15,7 @@ import "./App.css";
 
 const currentClientId = getClientId();
 const currentClientName = getClientName();
-type SidebarTab = "library" | "player";
+type SidebarTab = "library" | "player" | "mic";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -113,6 +114,17 @@ function App() {
             Player
           </button>
           <button
+            className={
+              activeSidebarTab === "mic" ? "sidebar-tab-active" : ""
+            }
+            onClick={() => {
+              setActiveSidebarTab("mic");
+              setIsSidebarOpen(true);
+            }}
+          >
+            Mic
+          </button>
+          <button
             onClick={() => {
               setIsSidebarOpen((value) => !value);
             }}
@@ -142,6 +154,17 @@ function App() {
             ].join(" ")}
           >
             <AudioPlayer />
+          </div>
+
+          <div
+            className={[
+              "sidebar-panel",
+              activeSidebarTab === "mic"
+                ? "sidebar-panel-active"
+                : "sidebar-panel-hidden",
+            ].join(" ")}
+          >
+            <MicrophoneSetup />
           </div>
         </div>
       </aside>
