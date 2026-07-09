@@ -25,10 +25,14 @@ import {
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://192.168.1.78:5173",
+];
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
   }),
 );
 
@@ -36,7 +40,7 @@ app.use(express.json());
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });
@@ -369,6 +373,6 @@ setInterval(() => {
   io.emit("sync-state", getSession());
 }, CLOCK_INTERVAL_MS);
 // ----- START SERVER -----
-server.listen(3001, () => {
-  console.log("🎤 Karaoke backend running on http://localhost:3001");
+server.listen(3001, "0.0.0.0", () => {
+  console.log("🎤 Karaoke backend running on http://0.0.0.0:3001");
 });

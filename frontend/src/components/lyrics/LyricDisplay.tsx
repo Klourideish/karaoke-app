@@ -3,6 +3,7 @@ import { useSessionStore } from "../../stores/sessionStore";
 import { parseTtml, type LyricLine } from "../../lyrics/parseTtml";
 import { getLyricDisplayState } from "../../lyrics/getLyricDisplayState";
 import { usePlaybackClockStore } from "../../stores/playbackClockStore";
+import { buildApiUrl } from "../../lib/backendUrl";
 
 export function LyricDisplay() {
   const currentSong = useSessionStore(
@@ -29,7 +30,7 @@ export function LyricDisplay() {
     async function loadLyrics() {
       try {
         const response = await fetch(
-          `http://localhost:3001/media/lyrics/${songId}`,
+          buildApiUrl(`/media/lyrics/${songId}`),
         );
 
         if (!response.ok) {

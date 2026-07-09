@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Song } from "shared";
+import { buildApiUrl } from "../lib/backendUrl";
 
 interface LibraryStore {
   songs: Song[];
@@ -28,7 +29,7 @@ export const useLibraryStore = create<LibraryStore>((set) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await fetch("http://localhost:3001/library");
+      const response = await fetch(buildApiUrl("/library"));
 
       if (!response.ok) {
         throw new Error("Failed to fetch library");
@@ -53,7 +54,7 @@ export const useLibraryStore = create<LibraryStore>((set) => ({
 
     try {
       const response = await fetch(
-        "http://localhost:3001/library/source",
+        buildApiUrl("/library/source"),
       );
 
       if (!response.ok) {
@@ -82,7 +83,7 @@ export const useLibraryStore = create<LibraryStore>((set) => ({
 
     try {
       const response = await fetch(
-        "http://localhost:3001/library/rescan",
+        buildApiUrl("/library/rescan"),
         {
           method: "POST",
         },
@@ -118,7 +119,7 @@ export const useLibraryStore = create<LibraryStore>((set) => ({
 
     try {
       const response = await fetch(
-        "http://localhost:3001/library/source",
+        buildApiUrl("/library/source"),
         {
           method: "POST",
           headers: {

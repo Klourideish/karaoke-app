@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { usePlaybackClockStore } from "../../stores/playbackClockStore";
 import { socket } from "../../lib/socket";
+import { buildApiUrl } from "../../lib/backendUrl";
 
 export function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -97,7 +98,7 @@ export function AudioPlayer() {
     );
   }
 
-  const audioUrl = `http://localhost:3001/media/audio/${currentSong.id}`;
+  const audioUrl = buildApiUrl(`/media/audio/${currentSong.id}`);
   const isCurrentAudioEvent = (audio: HTMLAudioElement) =>
     audio.currentSrc === audioUrl || audio.currentSrc === "";
   const progressPercent =

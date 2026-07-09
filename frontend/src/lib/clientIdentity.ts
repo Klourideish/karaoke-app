@@ -10,7 +10,8 @@ export function getClientId(): string {
     return existingClientId;
   }
 
-  const newClientId = crypto.randomUUID();
+  const newClientId =
+    globalThis.crypto?.randomUUID?.() ?? createFallbackClientId();
 
   localStorage.setItem(
     CLIENT_ID_STORAGE_KEY,
@@ -18,6 +19,12 @@ export function getClientId(): string {
   );
 
   return newClientId;
+}
+
+function createFallbackClientId(): string {
+  return `client-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2, 12)}`;
 }
 
 export function getClientName(): string {
