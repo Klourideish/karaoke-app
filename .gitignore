@@ -11,6 +11,12 @@ backend/dist/
 .env.*
 !.env.example
 
+# Local HTTPS development certificates
+.certs/
+certs/
+frontend/certs/
+*.local.pem
+
 # Logs
 *.log
 npm-debug.log*

@@ -26,7 +26,12 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://localhost:5173",
   "http://192.168.1.78:5173",
+  ...(process.env.FRONTEND_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
 ];
 
 app.use(
