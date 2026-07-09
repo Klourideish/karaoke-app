@@ -91,6 +91,22 @@ io.on("connection", (socket) => {
 
   // rest of handlers...
 
+  socket.on(
+    "clock-sync",
+    (
+      clientSentAt: number,
+      respond?: (payload: {
+        clientSentAt: number;
+        serverTime: number;
+      }) => void,
+    ) => {
+      respond?.({
+        clientSentAt,
+        serverTime: Date.now(),
+      });
+    },
+  );
+
   socket.on("play", () => {
     play();
     io.emit("sync-state", getSession());

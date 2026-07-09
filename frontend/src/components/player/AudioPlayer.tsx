@@ -6,12 +6,21 @@ import { buildApiUrl } from "../../lib/backendUrl";
 
 export function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wasPlayingRef = useRef(false);
+  const previousSongIdRef = useRef<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
+  const [serverClockOffsetMs, setServerClockOffsetMs] = useState(0);
 
   const currentSong = useSessionStore((state) => state.currentSong);
   const isPlaying = useSessionStore((state) => state.isPlaying);
   const position = useSessionStore((state) => state.position);
+  const startedAtServerTime = useSessionStore(
+    (state) => state.startedAtServerTime,
+  );
+  const positionAtStart = useSessionStore(
+    (state) => state.positionAtStart,
+  );
 
   const setPlaybackPosition = usePlaybackClockStore(
     (state) => state.setPosition,
@@ -19,6 +28,28 @@ export function AudioPlayer() {
   const localPosition = usePlaybackClockStore(
     (state) => state.position,
   );
+
+  useEffect(() => {
+    const clientSentAt = Date.now();
+
+    socket.emit(
+      "clock-sync",
+      clientSentAt,
+      (payload: {
+        clientSentAt: number;
+        serverTime: number;
+      }) => {
+        const clientReceivedAt = Date.now();
+        const roundTripMs = clientReceivedAt - payload.clientSentAt;
+        const estimatedServerNow =
+          payload.serverTime + roundTripMs / 2;
+
+        setServerClockOffsetMs(
+          estimatedServerNow - clientReceivedAt,
+        );
+      },
+    );
+  }, []);
 
   useEffect(() => {
     setAudioError(null);
@@ -39,12 +70,31 @@ export function AudioPlayer() {
       return;
     }
 
-    const timeDifference = Math.abs(audio.currentTime - position);
+    const authoritativePosition = estimateAuthoritativePosition(
+      position,
+      startedAtServerTime,
+      positionAtStart,
+      serverClockOffsetMs,
+      isPlaying,
+    );
+    const songChanged =
+      previousSongIdRef.current !== currentSong?.id;
+    const playbackJustStarted =
+      isPlaying && (!wasPlayingRef.current || songChanged);
+
+    if (playbackJustStarted) {
+      audio.currentTime = authoritativePosition;
+      setPlaybackPosition(authoritativePosition);
+    }
+
+    const timeDifference = Math.abs(
+      audio.currentTime - authoritativePosition,
+    );
     const correctionThreshold = isPlaying ? 2.0 : 0.5;
 
-    if (timeDifference > correctionThreshold) {
-      audio.currentTime = position;
-      setPlaybackPosition(position);
+    if (!playbackJustStarted && timeDifference > correctionThreshold) {
+      audio.currentTime = authoritativePosition;
+      setPlaybackPosition(authoritativePosition);
     }
 
     if (isPlaying) {
@@ -54,7 +104,18 @@ export function AudioPlayer() {
     } else {
       audio.pause();
     }
-  }, [isPlaying, position, currentSong?.id, setPlaybackPosition]);
+
+    wasPlayingRef.current = isPlaying;
+    previousSongIdRef.current = currentSong?.id ?? null;
+  }, [
+    isPlaying,
+    position,
+    startedAtServerTime,
+    positionAtStart,
+    serverClockOffsetMs,
+    currentSong?.id,
+    setPlaybackPosition,
+  ]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -170,6 +231,25 @@ export function AudioPlayer() {
         }}
       />
     </section>
+  );
+}
+
+function estimateAuthoritativePosition(
+  position: number,
+  startedAtServerTime: number | null,
+  positionAtStart: number,
+  serverClockOffsetMs: number,
+  isPlaying: boolean,
+): number {
+  if (!isPlaying || startedAtServerTime === null) {
+    return position;
+  }
+
+  const estimatedServerNow = Date.now() + serverClockOffsetMs;
+
+  return (
+    positionAtStart +
+    (estimatedServerNow - startedAtServerTime) / 1000
   );
 }
 

@@ -13,6 +13,8 @@ export const useSessionStore = create<SessionStore>((set) => ({
   currentSongRequestedByName: null,
   isPlaying: false,
   position: 0,
+  startedAtServerTime: null,
+  positionAtStart: 0,
   queue: [],
   singerSlots: [
     {
@@ -41,6 +43,8 @@ export const useSessionStore = create<SessionStore>((set) => ({
         session.currentSongRequestedByName,
       isPlaying: session.isPlaying,
       position: session.position,
+      startedAtServerTime: session.startedAtServerTime,
+      positionAtStart: session.positionAtStart,
       queue: session.queue,
       singerSlots: session.singerSlots,
     });

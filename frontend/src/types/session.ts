@@ -19,6 +19,8 @@ export interface SessionState {
   currentSongRequestedByName: string | null;
   isPlaying: boolean;
   position: number;
+  startedAtServerTime: number | null;
+  positionAtStart: number;
   queue: QueueItem[];
   singerSlots: SingerSlot[];
 }

@@ -29,6 +29,8 @@ export interface SessionState {
   isPlaying: boolean;
   playbackReady: boolean;
   position: number;
+  startedAtServerTime: number | null;
+  positionAtStart: number;
   queue: QueueItem[];
   singerSlots: SingerSlot[];
 }
@@ -43,6 +45,8 @@ const session = {
   isPlaying: false,
   playbackReady: false,
   position: 0,
+  startedAtServerTime: null as number | null,
+  positionAtStart: 0,
   singerSlots: createDefaultSingerSlots(),
 };
 
@@ -99,6 +103,8 @@ export function getSession(): SessionState {
     isPlaying: session.isPlaying,
     playbackReady: session.playbackReady,
     position: session.position,
+    startedAtServerTime: session.startedAtServerTime,
+    positionAtStart: session.positionAtStart,
     queue: getPublicQueue(),
     singerSlots: session.singerSlots.map((slot) => ({
       ...slot,
@@ -107,15 +113,28 @@ export function getSession(): SessionState {
 }
 
 export function play(): void {
+  session.startedAtServerTime = Date.now();
+  session.positionAtStart = session.position;
   session.isPlaying = true;
 }
 
 export function pause(): void {
+  if (session.isPlaying && session.startedAtServerTime !== null) {
+    session.position = getEstimatedPosition();
+  }
+
   session.isPlaying = false;
+  session.startedAtServerTime = null;
+  session.positionAtStart = session.position;
 }
 
 export function seek(position: number): void {
   session.position = position;
+  session.positionAtStart = position;
+
+  if (session.isPlaying) {
+    session.startedAtServerTime = Date.now();
+  }
 }
 
 export function markPlaybackReady(): void {
@@ -193,6 +212,8 @@ export function finishPlayback(): void {
   session.playbackReady = false;
   session.autoStartPending = false;
   session.position = 0;
+  session.startedAtServerTime = null;
+  session.positionAtStart = 0;
   selectNextQueuedSong();
 }
 
@@ -248,7 +269,23 @@ export function advancePosition(seconds: number): void {
     return;
   }
 
+  if (session.startedAtServerTime !== null) {
+    session.position = getEstimatedPosition();
+    return;
+  }
+
   session.position += seconds;
+}
+
+function getEstimatedPosition(): number {
+  if (!session.isPlaying || session.startedAtServerTime === null) {
+    return session.position;
+  }
+
+  return (
+    session.positionAtStart +
+    (Date.now() - session.startedAtServerTime) / 1000
+  );
 }
 
 export function selectSong(songId: string): boolean {
@@ -284,6 +321,8 @@ function selectQueuedSong(
   session.position = 0;
   session.isPlaying = false;
   session.playbackReady = false;
+  session.startedAtServerTime = null;
+  session.positionAtStart = 0;
 
   return true;
 }
@@ -296,6 +335,8 @@ export function resetSessionForTests(): void {
   session.isPlaying = false;
   session.playbackReady = false;
   session.position = 0;
+  session.startedAtServerTime = null;
+  session.positionAtStart = 0;
   session.singerSlots = createDefaultSingerSlots();
 
   internalQueue.length = 0;

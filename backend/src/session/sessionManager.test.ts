@@ -1,4 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import type { Song } from "shared";
 
 import {
@@ -33,6 +40,10 @@ describe("sessionManager", () => {
     resetSessionForTests();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("starts paused at position zero with an empty queue", () => {
     expect(getSession()).toMatchObject({
       currentSong: null,
@@ -42,6 +53,8 @@ describe("sessionManager", () => {
       isPlaying: false,
       playbackReady: false,
       position: 0,
+      startedAtServerTime: null,
+      positionAtStart: 0,
       queue: [],
       singerSlots: [
         {
@@ -174,13 +187,33 @@ describe("sessionManager", () => {
   });
 
   it("can play and pause", () => {
+    vi.spyOn(Date, "now").mockReturnValue(1000);
+
     play();
 
     expect(getSession().isPlaying).toBe(true);
+    expect(getSession()).toMatchObject({
+      startedAtServerTime: 1000,
+      positionAtStart: 0,
+    });
 
     pause();
 
     expect(getSession().isPlaying).toBe(false);
+    expect(getSession().startedAtServerTime).toBeNull();
+  });
+
+  it("records position and server time when playback starts", () => {
+    seek(42);
+    vi.spyOn(Date, "now").mockReturnValue(2000);
+
+    play();
+
+    expect(getSession()).toMatchObject({
+      isPlaying: true,
+      startedAtServerTime: 2000,
+      positionAtStart: 42,
+    });
   });
 
   it("can seek to a playback position", () => {
@@ -252,12 +285,18 @@ describe("sessionManager", () => {
     expect(getSession().queue[0]?.votes).toBe(1);
   });
 
-  it("advances position while playing", () => {
+  it("refreshes position from timestamp while playing without double-counting", () => {
+    const nowSpy = vi.spyOn(Date, "now");
+
+    seek(10);
+    nowSpy.mockReturnValue(1000);
     play();
 
+    nowSpy.mockReturnValue(2500);
+    advancePosition(1);
     advancePosition(1);
 
-    expect(getSession().position).toBe(1);
+    expect(getSession().position).toBe(11.5);
   });
 
   it("does not advance position while paused", () => {
