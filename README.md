@@ -66,7 +66,6 @@ frontend/    React frontend, playback, lyrics, UI, and local device features
 shared/      Shared types and contracts
 docs/        Architecture and manual testing documentation
 scripts/     Validation scripts
-music/       Local music library placeholder; media is ignored by Git
 ```
 
 ## Development
