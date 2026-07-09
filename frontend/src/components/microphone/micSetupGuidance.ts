@@ -4,7 +4,6 @@ export const CHROMIUM_INSECURE_ORIGIN_FLAG_URL =
 interface MicrophoneSetupEnvironment {
   protocol: string;
   hostname: string;
-  origin: string;
   isSecureContext: boolean;
   hasGetUserMedia: boolean;
 }

@@ -49,7 +49,6 @@ export function MicrophoneSetup() {
       shouldShowInsecureLanMicSetup({
         protocol: window.location.protocol,
         hostname: window.location.hostname,
-        origin: window.location.origin,
         isSecureContext: window.isSecureContext,
         hasGetUserMedia:
           typeof navigator.mediaDevices?.getUserMedia === "function",

@@ -11,7 +11,6 @@ describe("mic setup guidance", () => {
       shouldShowInsecureLanMicSetup({
         protocol: "http:",
         hostname: "192.168.1.78",
-        origin: "http://192.168.1.78:5173",
         isSecureContext: false,
         hasGetUserMedia: false,
       }),
@@ -23,7 +22,6 @@ describe("mic setup guidance", () => {
       shouldShowInsecureLanMicSetup({
         protocol: "http:",
         hostname: "192.168.1.78",
-        origin: "http://192.168.1.78:5173",
         isSecureContext: false,
         hasGetUserMedia: true,
       }),
@@ -38,7 +36,6 @@ describe("mic setup guidance", () => {
       shouldShowInsecureLanMicSetup({
         protocol: "http:",
         hostname: "localhost",
-        origin: "http://localhost:5173",
         isSecureContext: false,
         hasGetUserMedia: false,
       }),
@@ -50,7 +47,6 @@ describe("mic setup guidance", () => {
       shouldShowInsecureLanMicSetup({
         protocol: "https:",
         hostname: "192.168.1.78",
-        origin: "https://192.168.1.78:5173",
         isSecureContext: true,
         hasGetUserMedia: false,
       }),
