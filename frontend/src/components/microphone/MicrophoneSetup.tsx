@@ -13,6 +13,10 @@ export function MicrophoneSetup() {
   const isRequestingPermission = useMicrophoneStore(
     (state) => state.isRequestingPermission,
   );
+  const isMonitoring = useMicrophoneStore(
+    (state) => state.isMonitoring,
+  );
+  const level = useMicrophoneStore((state) => state.level);
   const error = useMicrophoneStore((state) => state.error);
   const checkSupport = useMicrophoneStore((state) => state.checkSupport);
   const requestPermission = useMicrophoneStore(
@@ -23,6 +27,15 @@ export function MicrophoneSetup() {
   );
   const selectDevice = useMicrophoneStore(
     (state) => state.selectDevice,
+  );
+  const startMonitoring = useMicrophoneStore(
+    (state) => state.startMonitoring,
+  );
+  const stopMonitoring = useMicrophoneStore(
+    (state) => state.stopMonitoring,
+  );
+  const selectedDevice = devices.find(
+    (device) => device.deviceId === selectedDeviceId,
   );
 
   useEffect(() => {
@@ -51,6 +64,12 @@ export function MicrophoneSetup() {
     };
   }, [refreshDevices]);
 
+  useEffect(() => {
+    return () => {
+      stopMonitoring();
+    };
+  }, [stopMonitoring]);
+
   return (
     <section className="microphone-setup">
       <h2>Mic</h2>
@@ -62,6 +81,7 @@ export function MicrophoneSetup() {
       )}
 
       <p>Permission: {permissionState}</p>
+      <p>Monitoring: {isMonitoring ? "active" : "stopped"}</p>
 
       {error && <p>Microphone error: {error}</p>}
 
@@ -106,6 +126,48 @@ export function MicrophoneSetup() {
           </select>
         </label>
       )}
+
+      <p>
+        Selected microphone:{" "}
+        {selectedDevice?.label ?? "No microphone selected"}
+      </p>
+
+      {!isMonitoring ? (
+        <button
+          disabled={
+            !isSupported ||
+            permissionState !== "granted" ||
+            !selectedDeviceId
+          }
+          onClick={() => {
+            void startMonitoring();
+          }}
+        >
+          Start monitoring
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            stopMonitoring();
+          }}
+        >
+          Stop monitoring
+        </button>
+      )}
+
+      <div
+        aria-label="Microphone input level"
+        aria-valuemax={1}
+        aria-valuemin={0}
+        aria-valuenow={level}
+        className="microphone-level-meter"
+        role="meter"
+      >
+        <div
+          className="microphone-level-meter-fill"
+          style={{ width: `${Math.round(level * 100)}%` }}
+        />
+      </div>
     </section>
   );
 }

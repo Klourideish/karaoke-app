@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateInputLevel,
+  clampNormalizedLevel,
+  createMicrophoneConstraints,
   getSelectedDeviceFallback,
   hasMicrophoneApiSupport,
   serializeAudioInputDevices,
@@ -99,5 +102,39 @@ describe("microphone helpers", () => {
 
   it("clears selection when no microphones remain", () => {
     expect(getSelectedDeviceFallback([], "missing-mic")).toBeNull();
+  });
+
+  it("creates default audio constraints without a selected device", () => {
+    expect(createMicrophoneConstraints(null)).toEqual({
+      audio: true,
+    });
+  });
+
+  it("creates exact device constraints for the selected device", () => {
+    expect(createMicrophoneConstraints("mic-1")).toEqual({
+      audio: {
+        deviceId: {
+          exact: "mic-1",
+        },
+      },
+    });
+  });
+
+  it("clamps normalized levels", () => {
+    expect(clampNormalizedLevel(-0.5)).toBe(0);
+    expect(clampNormalizedLevel(0.25)).toBe(0.25);
+    expect(clampNormalizedLevel(1.5)).toBe(1);
+    expect(clampNormalizedLevel(Number.NaN)).toBe(0);
+  });
+
+  it("calculates silence from centered time-domain samples", () => {
+    expect(calculateInputLevel(new Uint8Array([128, 128, 128]))).toBe(0);
+  });
+
+  it("calculates a normalized RMS input level", () => {
+    expect(calculateInputLevel(new Uint8Array([0, 128, 255]))).toBeCloseTo(
+      0.813,
+      3,
+    );
   });
 });
