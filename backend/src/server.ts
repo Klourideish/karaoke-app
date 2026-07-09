@@ -2,10 +2,9 @@ import express from "express";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import path from "node:path";
 import type { Song } from "shared";
 
-import { scanLibrary } from "./library/scanLibrary";
+import { libraryCache } from "./library/libraryCache";
 import {
   addToQueue,
   advancePosition,
@@ -44,39 +43,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
-
-let runtimeLibraryPath: string | null = null;
-
-function getLibrarySource() {
-  if (runtimeLibraryPath) {
-    return {
-      path: runtimeLibraryPath,
-      source: "runtime" as const,
-    };
-  }
-
-  if (process.env.MUSIC_DIR) {
-    return {
-      path: path.resolve(process.env.MUSIC_DIR),
-      source: "MUSIC_DIR" as const,
-    };
-  }
-
-  return {
-    path: path.resolve(process.cwd(), "../music"),
-    source: "fallback" as const,
-  };
-}
-
-async function scanActiveLibrary() {
-  const librarySource = getLibrarySource();
-  const songs = await scanLibrary(librarySource.path);
-
-  return {
-    ...librarySource,
-    songs,
-  };
-}
 
 // ----- SOCKET LOGIC -----
 io.on("connection", (socket) => {
@@ -250,7 +216,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/library/source", (_req, res) => {
-  const librarySource = getLibrarySource();
+  const librarySource = libraryCache.getSource();
 
   res.json({
     path: librarySource.path,
@@ -269,17 +235,14 @@ app.post("/library/source", async (req, res) => {
     return;
   }
 
-  const resolvedPath = path.resolve(requestedPath);
-
   try {
-    const songs = await scanLibrary(resolvedPath);
-    runtimeLibraryPath = resolvedPath;
+    const library = await libraryCache.setRuntimeSource(requestedPath);
 
     res.json({
-      path: resolvedPath,
-      source: "runtime",
-      songs,
-      count: songs.length,
+      path: library.path,
+      source: library.source,
+      songs: library.songs,
+      count: library.songs.length,
     });
   } catch (error) {
     console.error("Failed to set library source:", error);
@@ -291,14 +254,11 @@ app.post("/library/source", async (req, res) => {
 });
 
 app.get("/library", async (_req, res) => {
-  const librarySource = getLibrarySource();
-  console.log("Scanning library path:", librarySource.path);
-
   try {
-    const songs = await scanLibrary(librarySource.path);
+    const library = await libraryCache.getLibrary();
 
     res.json({
-      songs,
+      songs: library.songs,
     });
   } catch (error) {
     console.error("Failed to scan library:", error);
@@ -311,7 +271,7 @@ app.get("/library", async (_req, res) => {
 
 app.post("/library/rescan", async (_req, res) => {
   try {
-    const library = await scanActiveLibrary();
+    const library = await libraryCache.rescan();
 
     res.json({
       path: library.path,
@@ -329,14 +289,8 @@ app.post("/library/rescan", async (_req, res) => {
 });
 
 app.get("/media/audio/:songId", async (req, res) => {
-  const librarySource = getLibrarySource();
-
   try {
-    const songs = await scanLibrary(librarySource.path);
-
-    const song = songs.find(
-      (item) => item.id === req.params.songId,
-    );
+    const song = await libraryCache.getSongById(req.params.songId);
 
     if (!song) {
       res.status(404).json({
@@ -356,14 +310,8 @@ app.get("/media/audio/:songId", async (req, res) => {
 });
 
 app.get("/media/lyrics/:songId", async (req, res) => {
-  const librarySource = getLibrarySource();
-
   try {
-    const songs = await scanLibrary(librarySource.path);
-
-    const song = songs.find(
-      (item) => item.id === req.params.songId,
-    );
+    const song = await libraryCache.getSongById(req.params.songId);
 
     if (!song) {
       res.status(404).json({
