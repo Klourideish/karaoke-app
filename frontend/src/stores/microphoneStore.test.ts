@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   calculateInputLevel,
   clampNormalizedLevel,
@@ -6,6 +6,7 @@ import {
   getSelectedDeviceFallback,
   hasMicrophoneApiSupport,
   serializeAudioInputDevices,
+  useMicrophoneStore,
 } from "./microphoneStore";
 
 describe("microphone helpers", () => {
@@ -30,6 +31,30 @@ describe("microphone helpers", () => {
         enumerateDevices: () => undefined,
       }),
     ).toBe(true);
+  });
+
+  it("checks support without requesting microphone permission", () => {
+    const previousMediaDevices = navigator.mediaDevices;
+    const getUserMedia = vi.fn();
+    const enumerateDevices = vi.fn();
+
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia,
+        enumerateDevices,
+      },
+    });
+
+    useMicrophoneStore.getState().checkSupport();
+
+    expect(getUserMedia).not.toHaveBeenCalled();
+    expect(enumerateDevices).not.toHaveBeenCalled();
+
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: previousMediaDevices,
+    });
   });
 
   it("filters audio input devices and applies fallback labels", () => {

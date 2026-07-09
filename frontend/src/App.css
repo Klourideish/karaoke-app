@@ -270,6 +270,53 @@
   transition: width 80ms linear;
 }
 
+.mic-setup-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 62%);
+  box-sizing: border-box;
+}
+
+.mic-setup-modal {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 560px);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
+.mic-setup-modal-header,
+.mic-setup-modal-actions,
+.mic-setup-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mic-setup-modal-header {
+  justify-content: space-between;
+}
+
+.mic-setup-modal-header h2 {
+  margin: 0;
+}
+
+.mic-setup-copy-row code {
+  flex: 1 1 220px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .manual-controls {
   display: flex;
   flex-wrap: wrap;

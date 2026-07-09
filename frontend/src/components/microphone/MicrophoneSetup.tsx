@@ -1,7 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMicrophoneStore } from "../../stores/microphoneStore";
+import { MicSetupModal } from "./MicSetupModal";
+import {
+  getCurrentAppOrigin,
+  shouldShowInsecureLanMicSetup,
+} from "./micSetupGuidance";
 
 export function MicrophoneSetup() {
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
   const isSupported = useMicrophoneStore((state) => state.isSupported);
   const permissionState = useMicrophoneStore(
     (state) => state.permissionState,
@@ -37,10 +43,34 @@ export function MicrophoneSetup() {
   const selectedDevice = devices.find(
     (device) => device.deviceId === selectedDeviceId,
   );
+  const appOrigin = getCurrentAppOrigin(window.location);
+  const shouldOfferLanSetup = useMemo(
+    () =>
+      shouldShowInsecureLanMicSetup({
+        protocol: window.location.protocol,
+        hostname: window.location.hostname,
+        origin: window.location.origin,
+        isSecureContext: window.isSecureContext,
+        hasGetUserMedia:
+          typeof navigator.mediaDevices?.getUserMedia === "function",
+      }),
+    [],
+  );
 
   useEffect(() => {
     checkSupport();
   }, [checkSupport]);
+
+  useEffect(() => {
+    if (shouldOfferLanSetup && !isSupported) {
+      setIsSetupModalOpen(true);
+      return;
+    }
+
+    if (!shouldOfferLanSetup || isSupported) {
+      setIsSetupModalOpen(false);
+    }
+  }, [isSupported, shouldOfferLanSetup]);
 
   useEffect(() => {
     if (!navigator.mediaDevices?.addEventListener) {
@@ -75,9 +105,20 @@ export function MicrophoneSetup() {
       <h2>Mic</h2>
 
       {!isSupported && (
-        <p>
-          Microphone access is not available in this browser context.
-        </p>
+        <>
+          <p>
+            Microphone access is not available in this browser context.
+          </p>
+          {shouldOfferLanSetup && (
+            <button
+              onClick={() => {
+                setIsSetupModalOpen(true);
+              }}
+            >
+              Microphone setup help
+            </button>
+          )}
+        </>
       )}
 
       <p>Permission: {permissionState}</p>
@@ -168,6 +209,18 @@ export function MicrophoneSetup() {
           style={{ width: `${Math.round(level * 100)}%` }}
         />
       </div>
+
+      <MicSetupModal
+        appOrigin={appOrigin}
+        isOpen={isSetupModalOpen}
+        onClose={() => {
+          setIsSetupModalOpen(false);
+        }}
+        onRecheckSupport={() => {
+          checkSupport();
+          return useMicrophoneStore.getState().isSupported;
+        }}
+      />
     </section>
   );
 }
