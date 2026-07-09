@@ -3,6 +3,10 @@ import { useSessionStore } from "../../stores/sessionStore";
 import { parseTtml, type LyricLine } from "../../lyrics/parseTtml";
 import { getLyricDisplayState } from "../../lyrics/getLyricDisplayState";
 import { usePlaybackClockStore } from "../../stores/playbackClockStore";
+import {
+  applyLyricOffset,
+  useLocalPlaybackSettingsStore,
+} from "../../stores/localPlaybackSettingsStore";
 import { buildApiUrl } from "../../lib/backendUrl";
 
 export function LyricDisplay() {
@@ -11,6 +15,9 @@ export function LyricDisplay() {
   );
   const position = usePlaybackClockStore(
     (state) => state.position,
+  );
+  const lyricOffsetSeconds = useLocalPlaybackSettingsStore(
+    (state) => state.lyricOffsetSeconds,
   );
 
   const [lines, setLines] = useState<LyricLine[]>([]);
@@ -65,9 +72,14 @@ export function LyricDisplay() {
     };
   }, [currentSong?.id]);
 
+  const effectivePosition = applyLyricOffset(
+    position,
+    lyricOffsetSeconds,
+  );
+
   const lyricState = useMemo(
-    () => getLyricDisplayState(lines, position),
-    [lines, position],
+    () => getLyricDisplayState(lines, effectivePosition),
+    [effectivePosition, lines],
   );
 
   const { previousLine, currentLine, nextLine } = lyricState;
@@ -95,10 +107,10 @@ export function LyricDisplay() {
         >
           {currentLine.words.map((word, index) => {
             const isActive =
-              position >= word.start &&
-              position < word.end;
+              effectivePosition >= word.start &&
+              effectivePosition < word.end;
 
-            const isCompleted = position >= word.end;
+            const isCompleted = effectivePosition >= word.end;
 
             return (
               <span

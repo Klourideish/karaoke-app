@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { socket } from "./lib/socket";
 import { useSessionStore } from "./stores/sessionStore";
 import { usePlaybackClockStore } from "./stores/playbackClockStore";
+import { useLocalPlaybackSettingsStore } from "./stores/localPlaybackSettingsStore";
 import type { SessionState } from "./types/session";
 import { useLibraryStore } from "./stores/libraryStore";
 import { SongBrowser } from "./components/library/SongBrowser";
@@ -27,6 +28,18 @@ function App() {
   const singerSlots = useSessionStore((state) => state.singerSlots);
   const playbackPosition = usePlaybackClockStore(
     (state) => state.position,
+  );
+  const lyricOffsetSeconds = useLocalPlaybackSettingsStore(
+    (state) => state.lyricOffsetSeconds,
+  );
+  const decreaseLyricOffset = useLocalPlaybackSettingsStore(
+    (state) => state.decreaseLyricOffset,
+  );
+  const increaseLyricOffset = useLocalPlaybackSettingsStore(
+    (state) => state.increaseLyricOffset,
+  );
+  const resetLyricOffset = useLocalPlaybackSettingsStore(
+    (state) => state.resetLyricOffset,
   );
 
   const setSocketConnected = useSessionStore(
@@ -187,6 +200,15 @@ function App() {
             <span className="host-status-separator">|</span>
             <span>Queue: {queue.length}</span>
             <span className="host-status-separator">|</span>
+            <div className="lyric-offset-control">
+              <span>
+                Lyrics: {formatSignedSeconds(lyricOffsetSeconds)}
+              </span>
+              <button onClick={decreaseLyricOffset}>-</button>
+              <button onClick={increaseLyricOffset}>+</button>
+              <button onClick={resetLyricOffset}>Reset</button>
+            </div>
+            <span className="host-status-separator">|</span>
             <button onClick={handleTogglePlayback}>
               {isPlaying ? "Pause" : "Play"}
             </button>
@@ -260,4 +282,11 @@ function formatPlaybackTime(seconds: number): string {
   return `${minutes}:${remainingSeconds
     .toString()
     .padStart(2, "0")}`;
+}
+
+function formatSignedSeconds(seconds: number): string {
+  const sign = seconds > 0 ? "+" : "";
+  const decimals = Number.isInteger(seconds * 2) ? 1 : 2;
+
+  return `${sign}${seconds.toFixed(decimals)}s`;
 }

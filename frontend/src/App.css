@@ -49,6 +49,16 @@
   color: var(--border);
 }
 
+.lyric-offset-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lyric-offset-control button {
+  margin: 0;
+}
+
 .app-sidebar {
   display: grid;
   grid-template-columns: 58px minmax(0, 302px);
