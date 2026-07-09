@@ -46,12 +46,14 @@ export function hasMicrophoneApiSupport(
 export function serializeAudioInputDevices(
   devices: DeviceInfoLike[],
 ): MicrophoneDevice[] {
-  return devices
-    .filter((device) => device.kind === "audioinput")
-    .map((device, index) => ({
-      deviceId: device.deviceId,
-      label: device.label.trim() || `Microphone ${index + 1}`,
-    }));
+  const audioInputDevices = devices.filter(
+    (device) => device.kind === "audioinput",
+  );
+
+  return audioInputDevices.map((device, index) => ({
+    deviceId: device.deviceId,
+    label: device.label.trim() || `Microphone ${index + 1}`,
+  }));
 }
 
 export function getSelectedDeviceFallback(

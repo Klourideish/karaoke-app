@@ -32,19 +32,24 @@ describe("microphone helpers", () => {
   it("filters audio input devices and applies fallback labels", () => {
     const devices = serializeAudioInputDevices([
       {
-        kind: "audioinput",
-        deviceId: "mic-1",
-        label: "",
-      },
-      {
         kind: "videoinput",
         deviceId: "camera-1",
         label: "Camera",
       },
       {
         kind: "audioinput",
+        deviceId: "mic-1",
+        label: "",
+      },
+      {
+        kind: "audiooutput",
+        deviceId: "speaker-1",
+        label: "Speakers",
+      },
+      {
+        kind: "audioinput",
         deviceId: "mic-2",
-        label: "USB Mic",
+        label: "",
       },
     ]);
 
@@ -55,7 +60,7 @@ describe("microphone helpers", () => {
       },
       {
         deviceId: "mic-2",
-        label: "USB Mic",
+        label: "Microphone 2",
       },
     ]);
   });
