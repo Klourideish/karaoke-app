@@ -22,12 +22,9 @@ export function SongContextPanel() {
       <div className="song-context-section">
         <h2>Next</h2>
         {nextQueueItem ? (
-          <>
-            <p>
-              {nextQueueItem.song.artist} - {nextQueueItem.song.title}
-            </p>
-            <p>{nextQueueItem.votes} votes</p>
-          </>
+          <p>
+            {nextQueueItem.song.artist} - {nextQueueItem.song.title}
+          </p>
         ) : (
           <p>No queued song.</p>
         )}
