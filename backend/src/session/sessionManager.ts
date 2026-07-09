@@ -83,6 +83,16 @@ function createDefaultSingerSlots(): SingerSlot[] {
       name: "Singer 2",
       clientId: null,
     },
+    {
+      id: "singer-3",
+      name: "Singer 3",
+      clientId: null,
+    },
+    {
+      id: "singer-4",
+      name: "Singer 4",
+      clientId: null,
+    },
   ];
 }
 

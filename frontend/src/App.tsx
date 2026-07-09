@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { socket } from "./lib/socket";
 import { useSessionStore } from "./stores/sessionStore";
+import { usePlaybackClockStore } from "./stores/playbackClockStore";
 import type { SessionState } from "./types/session";
 import { useLibraryStore } from "./stores/libraryStore";
 import { SongBrowser } from "./components/library/SongBrowser";
@@ -19,12 +20,13 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeSidebarTab, setActiveSidebarTab] =
     useState<SidebarTab>("library");
-  const socketConnected = useSessionStore((state) => state.socketConnected);
   const currentSong = useSessionStore((state) => state.currentSong);
   const isPlaying = useSessionStore((state) => state.isPlaying);
-  const position = useSessionStore((state) => state.position);
   const queue = useSessionStore((state) => state.queue);
   const singerSlots = useSessionStore((state) => state.singerSlots);
+  const playbackPosition = usePlaybackClockStore(
+    (state) => state.position,
+  );
 
   const setSocketConnected = useSessionStore(
     (state) => state.setSocketConnected,
@@ -75,6 +77,10 @@ function App() {
     socket.emit("unassign-singer-slot", slotId);
   };
 
+  const handleTogglePlayback = () => {
+    socket.emit(isPlaying ? "pause" : "play");
+  };
+
   return (
     <div className="app-frame">
       <aside
@@ -115,31 +121,52 @@ function App() {
           </button>
         </div>
 
-        {isSidebarOpen && (
-          <div className="sidebar-content">
-            {activeSidebarTab === "library" && <SongBrowser />}
-            {activeSidebarTab === "player" && <AudioPlayer />}
+        <div className="sidebar-content">
+          <div
+            className={[
+              "sidebar-panel",
+              activeSidebarTab === "library"
+                ? "sidebar-panel-active"
+                : "sidebar-panel-hidden",
+            ].join(" ")}
+          >
+            <SongBrowser />
           </div>
-        )}
+
+          <div
+            className={[
+              "sidebar-panel",
+              activeSidebarTab === "player"
+                ? "sidebar-panel-active"
+                : "sidebar-panel-hidden",
+            ].join(" ")}
+          >
+            <AudioPlayer />
+          </div>
+        </div>
       </aside>
 
       <main className="app-shell">
         <header className="app-status">
           <div>
             <h1>Karaoke System</h1>
-            <p>Backend: {socketConnected ? "Connected" : "Disconnected"}</p>
           </div>
 
-          <div className="status-details">
-            <p>
-              Current song:{" "}
+          <div className="host-status-panel">
+            <span>
+              Current:{" "}
               {currentSong
                 ? `${currentSong.artist} - ${currentSong.title}`
                 : "No song selected"}
-            </p>
-            <p>Playback: {isPlaying ? "Playing" : "Paused"}</p>
-            <p>Position: {position} seconds</p>
-            <p>Queue size: {queue.length}</p>
+            </span>
+            <span className="host-status-separator">|</span>
+            <span>{formatPlaybackTime(playbackPosition)}</span>
+            <span className="host-status-separator">|</span>
+            <span>Queue: {queue.length}</span>
+            <span className="host-status-separator">|</span>
+            <button onClick={handleTogglePlayback}>
+              {isPlaying ? "Pause" : "Play"}
+            </button>
           </div>
         </header>
 
@@ -147,7 +174,7 @@ function App() {
           <section className="singer-slots-area">
             <h2>Singers</h2>
 
-            <ul>
+            <ul className="singer-slot-list">
               {singerSlots.map((slot) => {
                 const isAssigned = slot.clientId !== null;
                 const isOwnedByCurrentClient =
@@ -155,11 +182,11 @@ function App() {
 
                 return (
                   <li key={slot.id}>
+                    <strong>{slot.name}</strong>
                     <span>
-                      {slot.name} -{" "}
                       {isAssigned ? "Assigned" : "Unassigned"}
-                      {isOwnedByCurrentClient && " (you)"}
                     </span>
+                    {isOwnedByCurrentClient && <span>(you)</span>}
                     {!isAssigned && (
                       <button
                         onClick={() => {
@@ -197,3 +224,17 @@ function App() {
 }
 
 export default App;
+
+function formatPlaybackTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return "0:00";
+  }
+
+  const totalSeconds = Math.floor(seconds);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  return `${minutes}:${remainingSeconds
+    .toString()
+    .padStart(2, "0")}`;
+}

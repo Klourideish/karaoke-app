@@ -35,6 +35,29 @@ const testSong: Song = {
   lyricPath: "/music/Artist - Song.ttml",
 };
 
+const defaultSingerSlots = [
+  {
+    id: "singer-1",
+    name: "Singer 1",
+    clientId: null,
+  },
+  {
+    id: "singer-2",
+    name: "Singer 2",
+    clientId: null,
+  },
+  {
+    id: "singer-3",
+    name: "Singer 3",
+    clientId: null,
+  },
+  {
+    id: "singer-4",
+    name: "Singer 4",
+    clientId: null,
+  },
+];
+
 describe("sessionManager", () => {
   beforeEach(() => {
     resetSessionForTests();
@@ -56,34 +79,12 @@ describe("sessionManager", () => {
       startedAtServerTime: null,
       positionAtStart: 0,
       queue: [],
-      singerSlots: [
-        {
-          id: "singer-1",
-          name: "Singer 1",
-          clientId: null,
-        },
-        {
-          id: "singer-2",
-          name: "Singer 2",
-          clientId: null,
-        },
-      ],
+      singerSlots: defaultSingerSlots,
     });
   });
 
   it("starts with default singer slots", () => {
-    expect(getSession().singerSlots).toEqual([
-      {
-        id: "singer-1",
-        name: "Singer 1",
-        clientId: null,
-      },
-      {
-        id: "singer-2",
-        name: "Singer 2",
-        clientId: null,
-      },
-    ]);
+    expect(getSession().singerSlots).toEqual(defaultSingerSlots);
   });
 
   it("updates a singer slot name", () => {
@@ -127,18 +128,7 @@ describe("sessionManager", () => {
     );
 
     expect(updated).toBe(false);
-    expect(getSession().singerSlots).toEqual([
-      {
-        id: "singer-1",
-        name: "Singer 1",
-        clientId: null,
-      },
-      {
-        id: "singer-2",
-        name: "Singer 2",
-        clientId: null,
-      },
-    ]);
+    expect(getSession().singerSlots).toEqual(defaultSingerSlots);
   });
 
   it("assigning a known singer slot stores clientId and name", () => {
@@ -165,6 +155,40 @@ describe("sessionManager", () => {
     expect(getSession().singerSlots[0]?.name).toBe("Singer 1");
   });
 
+  it("assigns and releases Singer 3 and Singer 4", () => {
+    expect(
+      assignSingerSlotClient("singer-3", "client-3", "Carol"),
+    ).toBe(true);
+    expect(
+      assignSingerSlotClient("singer-4", "client-4", "Dana"),
+    ).toBe(true);
+
+    expect(getSession().singerSlots[2]).toMatchObject({
+      id: "singer-3",
+      name: "Carol",
+      clientId: "client-3",
+    });
+    expect(getSession().singerSlots[3]).toMatchObject({
+      id: "singer-4",
+      name: "Dana",
+      clientId: "client-4",
+    });
+
+    expect(assignSingerSlotClient("singer-3", null)).toBe(true);
+    expect(assignSingerSlotClient("singer-4", null)).toBe(true);
+
+    expect(getSession().singerSlots[2]).toMatchObject({
+      id: "singer-3",
+      name: "Singer 3",
+      clientId: null,
+    });
+    expect(getSession().singerSlots[3]).toMatchObject({
+      id: "singer-4",
+      name: "Singer 4",
+      clientId: null,
+    });
+  });
+
   it("unknown singer slot assignment is rejected", () => {
     const assigned = assignSingerSlotClient(
       "missing-singer",
@@ -172,18 +196,7 @@ describe("sessionManager", () => {
     );
 
     expect(assigned).toBe(false);
-    expect(getSession().singerSlots).toEqual([
-      {
-        id: "singer-1",
-        name: "Singer 1",
-        clientId: null,
-      },
-      {
-        id: "singer-2",
-        name: "Singer 2",
-        clientId: null,
-      },
-    ]);
+    expect(getSession().singerSlots).toEqual(defaultSingerSlots);
   });
 
   it("can play and pause", () => {
