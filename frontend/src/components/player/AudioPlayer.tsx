@@ -166,9 +166,20 @@ export function AudioPlayer() {
     duration && duration > 0
       ? Math.min(100, (localPosition / duration) * 100)
       : null;
+  const handlePlay = () => {
+    socket.emit("play");
+  };
+
+  const handlePause = () => {
+    socket.emit("pause");
+  };
+
+  const handleSeekForward = () => {
+    socket.emit("seek", position + 10);
+  };
 
   return (
-    <section>
+    <section className="audio-player">
       <h2>Player</h2>
 
       <p>
@@ -230,6 +241,12 @@ export function AudioPlayer() {
           socket.emit("finish-playback");
         }}
       />
+
+      <div className="manual-controls">
+        <button onClick={handlePlay}>Play</button>
+        <button onClick={handlePause}>Pause</button>
+        <button onClick={handleSeekForward}>Seek +10s</button>
+      </div>
     </section>
   );
 }

@@ -13,9 +13,12 @@ import "./App.css";
 
 const currentClientId = getClientId();
 const currentClientName = getClientName();
+type SidebarTab = "library" | "player";
 
 function App() {
-  const [isLibraryOpen, setIsLibraryOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeSidebarTab, setActiveSidebarTab] =
+    useState<SidebarTab>("library");
   const socketConnected = useSessionStore((state) => state.socketConnected);
   const currentSong = useSessionStore((state) => state.currentSong);
   const isPlaying = useSessionStore((state) => state.isPlaying);
@@ -61,18 +64,6 @@ function App() {
     };
   }, [setSession, setSocketConnected]);
 
-  const handlePlay = () => {
-    socket.emit("play");
-  };
-
-  const handlePause = () => {
-    socket.emit("pause");
-  };
-
-  const handleSeekForward = () => {
-    socket.emit("seek", position + 10);
-  };
-
   const handleClaimSingerSlot = (slotId: string) => {
     socket.emit("assign-singer-slot", {
       slotId,
@@ -88,22 +79,46 @@ function App() {
     <div className="app-frame">
       <aside
         className={[
-          "library-sidebar",
-          isLibraryOpen ? "library-sidebar-open" : "library-sidebar-closed",
+          "app-sidebar",
+          isSidebarOpen ? "app-sidebar-open" : "app-sidebar-closed",
         ].join(" ")}
       >
-        <button
-          className="library-sidebar-toggle"
-          onClick={() => {
-            setIsLibraryOpen((value) => !value);
-          }}
-        >
-          ☰ Library
-        </button>
+        <div className="sidebar-tabs">
+          <button
+            className={
+              activeSidebarTab === "library" ? "sidebar-tab-active" : ""
+            }
+            onClick={() => {
+              setActiveSidebarTab("library");
+              setIsSidebarOpen(true);
+            }}
+          >
+            Library
+          </button>
+          <button
+            className={
+              activeSidebarTab === "player" ? "sidebar-tab-active" : ""
+            }
+            onClick={() => {
+              setActiveSidebarTab("player");
+              setIsSidebarOpen(true);
+            }}
+          >
+            Player
+          </button>
+          <button
+            onClick={() => {
+              setIsSidebarOpen((value) => !value);
+            }}
+          >
+            {isSidebarOpen ? "Close" : "Open"}
+          </button>
+        </div>
 
-        {isLibraryOpen && (
-          <div className="library-sidebar-content">
-            <SongBrowser />
+        {isSidebarOpen && (
+          <div className="sidebar-content">
+            {activeSidebarTab === "library" && <SongBrowser />}
+            {activeSidebarTab === "player" && <AudioPlayer />}
           </div>
         )}
       </aside>
@@ -175,16 +190,6 @@ function App() {
           </div>
 
           <PerformanceStage />
-
-          <div className="player-control-area">
-            <AudioPlayer />
-
-            <div className="manual-controls">
-              <button onClick={handlePlay}>Play</button>
-              <button onClick={handlePause}>Pause</button>
-              <button onClick={handleSeekForward}>Seek +10s</button>
-            </div>
-          </div>
         </section>
       </main>
     </div>
