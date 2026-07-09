@@ -209,8 +209,15 @@ function App() {
               <button onClick={resetLyricOffset}>Reset</button>
             </div>
             <span className="host-status-separator">|</span>
-            <button onClick={handleTogglePlayback}>
-              {isPlaying ? "Pause" : "Play"}
+            <button
+              aria-label={
+                isPlaying
+                  ? "Pause shared playback"
+                  : "Start shared playback"
+              }
+              onClick={handleTogglePlayback}
+            >
+              {isPlaying ? "Host Pause" : "Host Play"}
             </button>
           </div>
         </header>
